@@ -1,10 +1,45 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Mapping of common food items to their approximate nutritional values
+const nutritionDatabase = {
+  pizza: { calories: 266, protein: 11, carbs: 33, fat: 10 },
+  burger: { calories: 354, protein: 20, carbs: 29, fat: 17 },
+  salad: { calories: 100, protein: 3, carbs: 11, fat: 7 },
+  pasta: { calories: 288, protein: 12, carbs: 57, fat: 2 },
+  rice: { calories: 130, protein: 2.7, carbs: 28, fat: 0.3 },
+  chicken: { calories: 335, protein: 38, carbs: 0, fat: 20 },
+  fish: { calories: 206, protein: 22, carbs: 0, fat: 12 },
+  sandwich: { calories: 250, protein: 12, carbs: 34, fat: 8 },
+  // Add more food items as needed
+};
+
+// Function to get closest matching food from our database
+function findClosestFood(prediction: string): any {
+  const normalizedPrediction = prediction.toLowerCase();
+  
+  // First try direct match
+  for (const [food, nutrition] of Object.entries(nutritionDatabase)) {
+    if (normalizedPrediction.includes(food)) {
+      return { description: prediction, ...nutrition };
+    }
+  }
+  
+  // If no match found, return default values
+  return {
+    description: prediction,
+    calories: 200,
+    protein: 10,
+    carbs: 25,
+    fat: 8
+  };
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -19,54 +54,26 @@ serve(async (req) => {
       throw new Error('No image provided');
     }
 
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are a nutritionist AI that analyzes food images. The image will be taken from approximately 1 foot away from the plate. Always respond in valid JSON format with the following structure: { description: string, calories: number, protein: number, carbs: number, fat: number }. Be precise with the nutritional values."
-          },
-          {
-            role: "user",
-            content: [
-              { 
-                type: "text", 
-                text: "What food is in this image? Please provide nutritional information." 
-              },
-              {
-                type: "image_url",
-                image_url: image
-              }
-            ]
-          }
-        ]
-      })
+    // Initialize Hugging Face client
+    const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'));
+
+    // Use a food classification model
+    const result = await hf.imageClassification({
+      model: 'nateraw/food',
+      data: image,
     });
 
-    if (!openAIResponse.ok) {
-      console.error('OpenAI API error:', await openAIResponse.text());
-      throw new Error('Failed to analyze image with OpenAI');
+    console.log('Hugging Face API Response:', result);
+
+    if (!result || !result[0]) {
+      throw new Error('No classification results returned');
     }
 
-    const data = await openAIResponse.json();
-    const analysis = JSON.parse(data.choices[0].message.content);
+    // Get the top prediction
+    const topPrediction = result[0];
+    const foodInfo = findClosestFood(topPrediction.label);
 
-    // Validate the response format
-    if (!analysis.description || 
-        typeof analysis.calories !== 'number' || 
-        typeof analysis.protein !== 'number' || 
-        typeof analysis.carbs !== 'number' || 
-        typeof analysis.fat !== 'number') {
-      throw new Error('Invalid response format from AI');
-    }
-
-    return new Response(JSON.stringify(analysis), {
+    return new Response(JSON.stringify(foodInfo), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
