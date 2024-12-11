@@ -24,6 +24,81 @@ export type Database = {
         }
         Relationships: []
       }
+      food_entries: {
+        Row: {
+          calories: number
+          carbs: number
+          created_at: string | null
+          description: string
+          fat: number
+          health_description: string | null
+          health_score: number | null
+          id: number
+          image_url: string | null
+          protein: number
+          user_id: string
+        }
+        Insert: {
+          calories: number
+          carbs: number
+          created_at?: string | null
+          description: string
+          fat: number
+          health_description?: string | null
+          health_score?: number | null
+          id?: number
+          image_url?: string | null
+          protein: number
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          created_at?: string | null
+          description?: string
+          fat?: number
+          health_description?: string | null
+          health_score?: number | null
+          id?: number
+          image_url?: string | null
+          protein?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_goals: {
+        Row: {
+          created_at: string | null
+          daily_calorie_goal: number
+          daily_carbs_goal: number
+          daily_fat_goal: number
+          daily_protein_goal: number
+          id: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_calorie_goal?: number
+          daily_carbs_goal?: number
+          daily_fat_goal?: number
+          daily_protein_goal?: number
+          id?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_calorie_goal?: number
+          daily_carbs_goal?: number
+          daily_fat_goal?: number
+          daily_protein_goal?: number
+          id?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

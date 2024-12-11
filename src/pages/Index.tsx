@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera, Upload, Clock } from "lucide-react";
+import { Upload, Clock } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { CameraCapture } from "@/components/food/CameraCapture";
+import { FoodEntryList } from "@/components/food/FoodEntryList";
 
 interface MacroData {
   calories: number;
@@ -13,6 +16,8 @@ interface MacroData {
   fat: number;
   timestamp: string;
   description: string;
+  health_score?: number;
+  health_description?: string;
 }
 
 const COLORS = ["#FF6B6B", "#4ECDC4", "#FFD93D"];
@@ -20,12 +25,9 @@ const COLORS = ["#FF6B6B", "#4ECDC4", "#FFD93D"];
 const Index = () => {
   const [macros, setMacros] = useState<MacroData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isCameraActive, setIsCameraActive] = useState(false);
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -88,46 +90,6 @@ const Index = () => {
     reader.readAsDataURL(file);
   };
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' }
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setIsCameraActive(true);
-      }
-    } catch (err) {
-      toast({
-        title: "Camera Error",
-        description: "Could not access camera",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-      setIsCameraActive(false);
-    }
-  };
-
-  const captureImage = async () => {
-    if (videoRef.current && streamRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(videoRef.current, 0, 0);
-      const base64Image = canvas.toDataURL('image/jpeg');
-      await analyzeImage(base64Image);
-      stopCamera();
-    }
-  };
-
   const getTotalMacros = () => {
     return macros.reduce(
       (acc, curr) => ({
@@ -146,45 +108,33 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen pb-20 bg-gradient-to-b from-background to-background/80">
       <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fadeIn">
-        <div className="text-center mb-8">
-          <p className="text-sm text-gray-500 mb-2">
-            {format(new Date(), "MMMM d, yyyy")}
-          </p>
-          <div className="flex items-center justify-center text-sm text-gray-600">
-            <Clock className="w-4 h-4 mr-1" />
-            <span>Time until next day: {timeLeft}</span>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">
+              {format(new Date(), "MMMM d, yyyy")}
+            </p>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Clock className="w-4 h-4 mr-1" />
+              <span>Time until next day: {timeLeft}</span>
+            </div>
           </div>
+          <ThemeToggle />
         </div>
 
         <div className="grid gap-6">
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Track Your Food</h2>
             <div className="flex gap-4 justify-center">
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading || isCameraActive}
+                disabled={isLoading}
               >
                 <Upload className="w-5 h-5 mr-2" />
                 Upload Image
               </Button>
-              <Button
-                onClick={isCameraActive ? captureImage : startCamera}
-                disabled={isLoading}
-              >
-                <Camera className="w-5 h-5 mr-2" />
-                {isCameraActive ? 'Capture' : 'Take Photo'}
-              </Button>
-              {isCameraActive && (
-                <Button
-                  variant="outline"
-                  onClick={stopCamera}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-              )}
+              <CameraCapture onCapture={analyzeImage} />
             </div>
             <input
               type="file"
@@ -192,19 +142,11 @@ const Index = () => {
               className="hidden"
               accept="image/*"
               onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-              disabled={isLoading || isCameraActive}
+              disabled={isLoading}
             />
-            {isCameraActive && (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="mt-4 w-full max-w-md mx-auto rounded-lg"
-              />
-            )}
           </div>
 
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Today's Macros</h2>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -231,27 +173,9 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Recent Entries</h2>
-            <div className="space-y-4">
-              {macros.map((macro, index) => (
-                <div
-                  key={index}
-                  className="p-4 rounded-lg bg-gray-50 border border-gray-100"
-                >
-                  <p className="font-medium">{macro.description}</p>
-                  <div className="mt-2 text-sm text-gray-600 grid grid-cols-2 gap-2">
-                    <span>Calories: {macro.calories}</span>
-                    <span>Protein: {macro.protein}g</span>
-                    <span>Carbs: {macro.carbs}g</span>
-                    <span>Fat: {macro.fat}g</span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {format(new Date(macro.timestamp), "h:mm a")}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <FoodEntryList entries={macros} />
           </div>
         </div>
       </div>
