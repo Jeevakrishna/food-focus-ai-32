@@ -1,8 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Camera, Upload, Clock } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MacroData {
   calories: number;
@@ -19,11 +21,13 @@ const Index = () => {
   const [macros, setMacros] = useState<MacroData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCameraActive, setIsCameraActive] = useState(false);
 
-  // Update time left every minute
-  useState(() => {
+  useEffect(() => {
     const updateTimeLeft = () => {
       const now = new Date();
       const tomorrow = new Date(now);
@@ -42,34 +46,57 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const analyzeImage = async (base64Image: string) => {
+    setIsLoading(true);
+    try {
+      const response = await supabase.functions.invoke('analyze-food', {
+        body: { image: base64Image }
+      });
+
+      if (response.error) throw response.error;
+
+      const newMacro = {
+        ...response.data,
+        timestamp: new Date().toISOString(),
+      };
+
+      setMacros([...macros, newMacro]);
+      
+      toast({
+        title: "Food tracked successfully!",
+        description: response.data.description,
+      });
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      toast({
+        title: "Error analyzing food",
+        description: "Failed to analyze the image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleFileUpload = async (file: File) => {
-    // Simulate AI analysis (replace with actual AI implementation)
-    const mockAnalysis = {
-      description: "Grilled chicken with rice and vegetables",
-      calories: 450,
-      protein: 35,
-      carbs: 45,
-      fat: 15,
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      if (e.target?.result) {
+        await analyzeImage(e.target.result as string);
+      }
     };
-
-    const newMacro = {
-      ...mockAnalysis,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMacros([...macros, newMacro]);
-    
-    toast({
-      title: "Food tracked successfully!",
-      description: mockAnalysis.description,
-    });
+    reader.readAsDataURL(file);
   };
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' }
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setIsCameraActive(true);
       }
     } catch (err) {
       toast({
@@ -77,6 +104,27 @@ const Index = () => {
         description: "Could not access camera",
         variant: "destructive",
       });
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+      setIsCameraActive(false);
+    }
+  };
+
+  const captureImage = async () => {
+    if (videoRef.current && streamRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(videoRef.current, 0, 0);
+      const base64Image = canvas.toDataURL('image/jpeg');
+      await analyzeImage(base64Image);
+      stopCamera();
     }
   };
 
@@ -111,24 +159,32 @@ const Index = () => {
         </div>
 
         <div className="grid gap-6">
-          {/* Image Upload Section */}
           <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border border-gray-100">
             <h2 className="text-xl font-semibold mb-4">Track Your Food</h2>
             <div className="flex gap-4 justify-center">
-              <button
+              <Button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                disabled={isLoading || isCameraActive}
               >
-                <Upload className="w-5 h-5" />
+                <Upload className="w-5 h-5 mr-2" />
                 Upload Image
-              </button>
-              <button
-                onClick={startCamera}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+              </Button>
+              <Button
+                onClick={isCameraActive ? captureImage : startCamera}
+                disabled={isLoading}
               >
-                <Camera className="w-5 h-5" />
-                Take Photo
-              </button>
+                <Camera className="w-5 h-5 mr-2" />
+                {isCameraActive ? 'Capture' : 'Take Photo'}
+              </Button>
+              {isCameraActive && (
+                <Button
+                  variant="outline"
+                  onClick={stopCamera}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+              )}
             </div>
             <input
               type="file"
@@ -136,16 +192,18 @@ const Index = () => {
               className="hidden"
               accept="image/*"
               onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+              disabled={isLoading || isCameraActive}
             />
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="mt-4 w-full rounded-lg hidden"
-            />
+            {isCameraActive && (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="mt-4 w-full max-w-md mx-auto rounded-lg"
+              />
+            )}
           </div>
 
-          {/* Macros Distribution Chart */}
           <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border border-gray-100">
             <h2 className="text-xl font-semibold mb-4">Today's Macros</h2>
             <div className="h-[300px]">
@@ -173,7 +231,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Recent Entries */}
           <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border border-gray-100">
             <h2 className="text-xl font-semibold mb-4">Recent Entries</h2>
             <div className="space-y-4">
