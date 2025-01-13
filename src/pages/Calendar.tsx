@@ -15,7 +15,7 @@ interface DayProgress {
 }
 
 const Calendar = () => {
-  const [currentDate] = useState(new Date(2024, 11, 11));
+  const [currentDate] = useState(new Date());
   const [timeLeft, setTimeLeft] = useState("");
   const { toast } = useToast();
   
@@ -53,7 +53,6 @@ const Calendar = () => {
   }, []);
 
   useEffect(() => {
-    // Show welcome toast when component mounts
     toast({
       title: "New Day Started!",
       description: `Let's log your meals for ${format(currentDate, "MMMM d")} to stay on track with your goals.`,
