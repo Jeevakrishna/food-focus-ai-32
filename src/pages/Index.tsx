@@ -87,14 +87,21 @@ const Index = () => {
   const analyzeImage = async (base64Image: string) => {
     setIsLoading(true);
     try {
-      const response = await supabase.functions.invoke('analyze-food', {
+      const { data, error } = await supabase.functions.invoke('analyze-food', {
         body: { image: base64Image }
       });
 
-      if (response.error) throw response.error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to analyze food');
+      }
+
+      if (!data) {
+        throw new Error('No data returned from analysis');
+      }
 
       const newMacro = {
-        ...response.data,
+        ...data,
         timestamp: new Date().toISOString(),
       };
 
@@ -102,13 +109,13 @@ const Index = () => {
       
       toast({
         title: "Food tracked successfully!",
-        description: response.data.description,
+        description: data.description,
       });
     } catch (error) {
       console.error('Error analyzing image:', error);
       toast({
         title: "Error analyzing food",
-        description: "Failed to analyze the image. Please try again.",
+        description: error.message || "Failed to analyze the image. Please try again.",
         variant: "destructive",
       });
     } finally {

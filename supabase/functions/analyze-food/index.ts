@@ -65,8 +65,13 @@ serve(async (req) => {
     console.log('Processing image data...');
     const imageBytes = await base64ToBytes(image);
 
-    // Initialize Hugging Face client
-    const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'));
+    // Initialize Hugging Face client with error handling
+    const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
+    if (!hfToken) {
+      throw new Error('HUGGING_FACE_ACCESS_TOKEN is not set');
+    }
+
+    const hf = new HfInference(hfToken);
     console.log('Initialized Hugging Face client');
 
     // Use a food classification model
