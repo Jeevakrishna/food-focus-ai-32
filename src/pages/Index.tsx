@@ -40,7 +40,6 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    // Calculate today's total calories
     const today = new Date().toISOString().split('T')[0];
     const todayEntries = macros.filter(entry => 
       entry.timestamp.startsWith(today)
@@ -50,7 +49,6 @@ const Index = () => {
     );
     setTodayCalories(totalCalories);
 
-    // Show progress toast
     if (goals.calories > 0) {
       const remaining = goals.calories - totalCalories;
       if (remaining > 0) {
@@ -62,7 +60,6 @@ const Index = () => {
         toast({
           title: "Goal Exceeded!",
           description: `Great job! You've exceeded your goal by ${Math.abs(remaining)} kcal today!`,
-          variant: "success",
         });
       }
     }
@@ -130,7 +127,7 @@ const Index = () => {
   };
 
   const getTotalMacros = () => {
-    return macros.reduce(
+    const totals = macros.reduce(
       (acc, curr) => ({
         protein: acc.protein + curr.protein,
         carbs: acc.carbs + curr.carbs,
@@ -138,6 +135,15 @@ const Index = () => {
       }),
       { protein: 0, carbs: 0, fat: 0 }
     );
+
+    const total = totals.protein + totals.carbs + totals.fat;
+    if (total === 0) return { protein: 0, carbs: 0, fat: 0 };
+
+    return {
+      protein: Math.round((totals.protein / total) * 100),
+      carbs: Math.round((totals.carbs / total) * 100),
+      fat: Math.round((totals.fat / total) * 100),
+    };
   };
 
   const pieData = [
@@ -216,6 +222,7 @@ const Index = () => {
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    label={({ value }) => `${value}%`}
                   >
                     {pieData.map((entry, index) => (
                       <Cell
