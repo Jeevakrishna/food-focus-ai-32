@@ -1,37 +1,36 @@
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
-import { format, differenceInSeconds } from "date-fns";
+import { CalendarIcon, Clock } from "lucide-react";
+import { format, differenceInSeconds, isSameDay } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
 
 interface DayProgress {
   date: string;
   achieved: boolean;
-  macros: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
+  calories: number;
 }
 
-const Calendar = () => {
+const CalendarPage = () => {
   const [currentDate] = useState(new Date());
   const [timeLeft, setTimeLeft] = useState("");
+  const [progress, setProgress] = useState<DayProgress[]>([]);
   const { toast } = useToast();
-  
-  // Mock data for calendar progress
-  const mockProgress: { [key: string]: DayProgress } = {
-    "2024-12-10": {
-      date: "2024-12-10",
-      achieved: true,
-      macros: { calories: 2100, protein: 150, carbs: 200, fat: 70 }
-    },
-    "2024-12-04": {
-      date: "2024-12-04",
-      achieved: false,
-      macros: { calories: 1500, protein: 90, carbs: 150, fat: 50 }
+  const [calorieGoal] = useState(() => {
+    const saved = localStorage.getItem("macroGoals");
+    if (saved) {
+      const goals = JSON.parse(saved);
+      return goals.calories || 0;
     }
-  };
+    return 0;
+  });
+
+  // Load progress data from localStorage
+  useEffect(() => {
+    const savedProgress = localStorage.getItem("calorieProgress");
+    if (savedProgress) {
+      setProgress(JSON.parse(savedProgress));
+    }
+  }, []);
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -52,32 +51,25 @@ const Calendar = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    toast({
-      title: "New Day Started!",
-      description: `Let's log your meals for ${format(currentDate, "MMMM d")} to stay on track with your goals.`,
-    });
-  }, []);
-
-  const getDayStatus = (day: number) => {
-    const dateStr = format(
-      new Date(currentDate.getFullYear(), currentDate.getMonth(), day),
-      "yyyy-MM-dd"
+  // Custom day content renderer for the Calendar
+  const DayContent = (day: Date) => {
+    const dayProgress = progress.find(p => 
+      isSameDay(new Date(p.date), day)
     );
-    return mockProgress[dateStr]?.achieved;
-  };
 
-  const { daysInMonth, firstDayOfMonth } = {
-    daysInMonth: new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-      0
-    ).getDate(),
-    firstDayOfMonth: new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      1
-    ).getDay(),
+    if (!dayProgress) return null;
+
+    return (
+      <div className={`h-full w-full rounded-full ${
+        dayProgress.achieved 
+          ? "bg-success/20" 
+          : "bg-destructive/20"
+      }`}>
+        <div className="h-7 w-7 flex items-center justify-center">
+          {format(day, "d")}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -88,7 +80,7 @@ const Calendar = () => {
             <div className="flex items-center gap-3">
               <CalendarIcon className="w-6 h-6 text-primary" />
               <h1 className="text-2xl font-semibold">
-                {format(currentDate, "MMMM yyyy")}
+                Progress Calendar
               </h1>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -97,61 +89,38 @@ const Calendar = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-2 text-center mb-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-sm font-medium text-muted-foreground">
-                {day}
-              </div>
-            ))}
-          </div>
+          {calorieGoal ? (
+            <div className="flex flex-col items-center space-y-6">
+              <Calendar
+                mode="single"
+                selected={currentDate}
+                components={{
+                  DayContent: ({ date }) => DayContent(date),
+                }}
+              />
 
-          <div className="grid grid-cols-7 gap-2">
-            {Array.from({ length: firstDayOfMonth }).map((_, index) => (
-              <div key={`empty-${index}`} />
-            ))}
-            
-            {Array.from({ length: daysInMonth }).map((_, index) => {
-              const day = index + 1;
-              const status = getDayStatus(day);
-              const isCurrentDay = day === currentDate.getDate();
-              
-              return (
-                <div
-                  key={day}
-                  className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isCurrentDay
-                      ? "bg-primary text-primary-foreground"
-                      : status === undefined
-                      ? "bg-card"
-                      : status
-                      ? "bg-success/20 text-success"
-                      : "bg-destructive/20 text-destructive"
-                  }`}
-                >
-                  {day}
+              <div className="flex gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-success/20" />
+                  <span className="text-sm text-muted-foreground">Goal Achieved</span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-success/20" />
-            <span className="text-sm text-muted-foreground">Goals Achieved</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-destructive/20" />
-            <span className="text-sm text-muted-foreground">Goals Missed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-primary" />
-            <span className="text-sm text-muted-foreground">Current Day</span>
-          </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-destructive/20" />
+                  <span className="text-sm text-muted-foreground">Goal Missed</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                Set your daily calorie goal in the Goals page to start tracking your progress.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default Calendar;
+export default CalendarPage;
