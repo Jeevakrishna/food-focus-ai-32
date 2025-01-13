@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, Clock } from "lucide-react";
+import { Upload, Clock, Target } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CameraCapture } from "@/components/food/CameraCapture";
@@ -28,21 +29,59 @@ const Index = () => {
   const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [goals, setGoals] = useState({ calories: 0 });
+  const [todayCalories, setTodayCalories] = useState(0);
 
   useEffect(() => {
-    const updateTimeLeft = () => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      
-      const diff = tomorrow.getTime() - now.getTime();
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      
-      setTimeLeft(`${hours}h ${minutes}m`);
-    };
+    const savedGoals = localStorage.getItem("macroGoals");
+    if (savedGoals) {
+      setGoals(JSON.parse(savedGoals));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Calculate today's total calories
+    const today = new Date().toISOString().split('T')[0];
+    const todayEntries = macros.filter(entry => 
+      entry.timestamp.startsWith(today)
+    );
+    const totalCalories = todayEntries.reduce((sum, entry) => 
+      sum + entry.calories, 0
+    );
+    setTodayCalories(totalCalories);
+
+    // Show progress toast
+    if (goals.calories > 0) {
+      const remaining = goals.calories - totalCalories;
+      if (remaining > 0) {
+        toast({
+          title: "Calorie Goal Progress",
+          description: `You have ${remaining} kcal remaining today. Log your next meal to stay on track!`,
+        });
+      } else {
+        toast({
+          title: "Goal Exceeded!",
+          description: `Great job! You've exceeded your goal by ${Math.abs(remaining)} kcal today!`,
+          variant: "success",
+        });
+      }
+    }
+  }, [macros, goals.calories]);
+
+  const updateTimeLeft = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
     
+    const diffInSeconds = Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
+    const hours = Math.floor(diffInSeconds / 3600);
+    const minutes = Math.floor((diffInSeconds % 3600) / 60);
+    
+    setTimeLeft(`${hours}h ${minutes}m`);
+  };
+
+  useEffect(() => {
     updateTimeLeft();
     const interval = setInterval(updateTimeLeft, 60000);
     return () => clearInterval(interval);
@@ -122,6 +161,24 @@ const Index = () => {
           </div>
           <ThemeToggle />
         </div>
+
+        {goals.calories > 0 && (
+          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-primary" />
+                <h2 className="font-semibold">Daily Calorie Goal</h2>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {todayCalories} / {goals.calories} kcal
+              </span>
+            </div>
+            <Progress 
+              value={(todayCalories / goals.calories) * 100} 
+              className="h-3"
+            />
+          </div>
+        )}
 
         <div className="grid gap-6">
           <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
