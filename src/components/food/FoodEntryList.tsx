@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { HealthIndicator } from "./HealthIndicator";
+import { Database } from "lucide-react";
 
 interface FoodEntry {
   description: string;
@@ -10,6 +11,8 @@ interface FoodEntry {
   timestamp: string;
   health_score?: number;
   health_description?: string;
+  confidence?: number;
+  source?: 'local' | 'ai';
 }
 
 interface FoodEntryListProps {
@@ -42,7 +45,16 @@ export const FoodEntryList = ({ entries }: FoodEntryListProps) => {
                 key={index}
                 className="p-4 rounded-lg bg-card border animate-fadeIn"
               >
-                <p className="font-medium">{entry.description}</p>
+                <div className="flex justify-between items-start">
+                  <p className="font-medium">{entry.description}</p>
+                  {entry.source && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Database className="w-3 h-3" />
+                      {entry.source === 'local' ? 'Dataset' : 'AI'} 
+                      {entry.confidence && `(${Math.round(entry.confidence * 100)}%)`}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-2 text-sm text-muted-foreground grid grid-cols-2 gap-2">
                   <span>Calories: {entry.calories}</span>
                   <span>Protein: {entry.protein}g</span>

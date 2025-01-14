@@ -16,22 +16,24 @@ const nutritionDatabase = {
   sandwich: { calories: 250, protein: 12, carbs: 34, fat: 8 },
 };
 
-function findClosestFood(prediction: string): any {
-  const normalizedPrediction = prediction.toLowerCase();
+function findInLocalDatabase(foodName: string) {
+  const normalizedName = foodName.toLowerCase().trim();
   
-  for (const [food, nutrition] of Object.entries(nutritionDatabase)) {
-    if (normalizedPrediction.includes(food)) {
-      return { description: prediction, ...nutrition };
+  // Check exact matches
+  for (const [key, value] of Object.entries(nutritionDatabase)) {
+    if (normalizedName === key) {
+      return { ...value, confidence: 1, source: 'local' };
     }
   }
   
-  return {
-    description: prediction,
-    calories: 200,
-    protein: 10,
-    carbs: 25,
-    fat: 8
-  };
+  // Check partial matches
+  for (const [key, value] of Object.entries(nutritionDatabase)) {
+    if (normalizedName.includes(key) || key.includes(normalizedName)) {
+      return { ...value, confidence: 0.8, source: 'local' };
+    }
+  }
+  
+  return null;
 }
 
 async function base64ToBytes(base64String: string): Promise<Uint8Array> {
@@ -44,7 +46,7 @@ async function base64ToBytes(base64String: string): Promise<Uint8Array> {
   return bytes;
 }
 
-async function analyzeImageWithGroq(imageBytes: Uint8Array): Promise<string> {
+async function analyzeImageWithGroq(imageBytes: Uint8Array): Promise<{ prediction: string; confidence: number }> {
   const base64Image = btoa(String.fromCharCode(...imageBytes));
   
   const prompt = `You are a food recognition AI. Analyze this image and tell me what food item it is. 
@@ -75,7 +77,10 @@ async function analyzeImageWithGroq(imageBytes: Uint8Array): Promise<string> {
   }
 
   const data = await response.json();
-  return data.choices[0].message.content.trim();
+  return {
+    prediction: data.choices[0].message.content.trim(),
+    confidence: 0.9 // Assuming high confidence for AI predictions
+  };
 }
 
 serve(async (req) => {
@@ -93,16 +98,40 @@ serve(async (req) => {
     console.log('Processing image data...');
     const imageBytes = await base64ToBytes(image);
 
-    // Use Groq AI to analyze the image
-    const prediction = await analyzeImageWithGroq(imageBytes);
-    console.log('Groq AI prediction:', prediction);
+    // First try local database match using Groq prediction
+    const groqResult = await analyzeImageWithGroq(imageBytes);
+    console.log('Groq AI prediction:', groqResult.prediction);
+    
+    // Try to find in local database first
+    const localMatch = findInLocalDatabase(groqResult.prediction);
+    
+    if (localMatch) {
+      console.log('Found match in local database:', localMatch);
+      return new Response(
+        JSON.stringify({
+          description: groqResult.prediction,
+          ...localMatch,
+          confidence: localMatch.confidence,
+          source: 'local'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Map the prediction to nutritional information
-    const foodInfo = findClosestFood(prediction);
-
-    return new Response(JSON.stringify(foodInfo), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // If no local match found, use the Groq prediction with default nutritional values
+    console.log('No local match found, using AI prediction with default values');
+    return new Response(
+      JSON.stringify({
+        description: groqResult.prediction,
+        calories: 200,
+        protein: 10,
+        carbs: 25,
+        fat: 8,
+        confidence: groqResult.confidence,
+        source: 'ai'
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error in analyze-food function:', error);
