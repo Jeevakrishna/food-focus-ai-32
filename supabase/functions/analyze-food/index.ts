@@ -1,12 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Mapping of common food items to their approximate nutritional values
 const nutritionDatabase = {
   pizza: { calories: 266, protein: 11, carbs: 33, fat: 10 },
   burger: { calories: 354, protein: 20, carbs: 29, fat: 17 },
@@ -37,10 +35,7 @@ function findClosestFood(prediction: string): any {
 }
 
 async function base64ToBytes(base64String: string): Promise<Uint8Array> {
-  // Remove the data URL prefix if present
   const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
-  
-  // Decode base64 to bytes
   const binaryString = atob(base64Data);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -49,8 +44,41 @@ async function base64ToBytes(base64String: string): Promise<Uint8Array> {
   return bytes;
 }
 
+async function analyzeImageWithGroq(imageBytes: Uint8Array): Promise<string> {
+  const base64Image = btoa(String.fromCharCode(...imageBytes));
+  
+  const prompt = `You are a food recognition AI. Analyze this image and tell me what food item it is. 
+                 Respond with ONLY the food name, nothing else. For example: "Pizza" or "Chicken Salad".
+                 Here's the base64 encoded image: ${base64Image}`;
+
+  const response = await fetch('https://api.groq.com/v1/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer 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',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: "mixtral-8x7b-32768",
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.5,
+      max_tokens: 50,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content.trim();
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -65,30 +93,12 @@ serve(async (req) => {
     console.log('Processing image data...');
     const imageBytes = await base64ToBytes(image);
 
-    // Initialize Hugging Face client with error handling
-    const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
-    if (!hfToken) {
-      throw new Error('HUGGING_FACE_ACCESS_TOKEN is not set');
-    }
+    // Use Groq AI to analyze the image
+    const prediction = await analyzeImageWithGroq(imageBytes);
+    console.log('Groq AI prediction:', prediction);
 
-    const hf = new HfInference(hfToken);
-    console.log('Initialized Hugging Face client');
-
-    // Use a food classification model
-    const result = await hf.imageClassification({
-      model: 'nateraw/food',
-      data: imageBytes,
-    });
-
-    console.log('Classification result:', result);
-
-    if (!result || !result[0]) {
-      throw new Error('No classification results returned');
-    }
-
-    // Get the top prediction
-    const topPrediction = result[0];
-    const foodInfo = findClosestFood(topPrediction.label);
+    // Map the prediction to nutritional information
+    const foodInfo = findClosestFood(prediction);
 
     return new Response(JSON.stringify(foodInfo), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
