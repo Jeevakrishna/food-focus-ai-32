@@ -57,15 +57,14 @@ const CalendarPage = () => {
       isSameDay(new Date(p.date), day)
     );
 
-    if (!dayProgress) return null;
-
     return (
       <div className={`h-full w-full rounded-full ${
-        dayProgress.achieved 
+        dayProgress ? (dayProgress.achieved 
           ? "bg-success/20" 
           : "bg-destructive/20"
+        ) : ""
       }`}>
-        <div className="h-7 w-7 flex items-center justify-center">
+        <div className="h-7 w-7 flex items-center justify-center font-medium">
           {format(day, "d")}
         </div>
       </div>
@@ -94,6 +93,7 @@ const CalendarPage = () => {
               <Calendar
                 mode="single"
                 selected={currentDate}
+                className="rounded-md border shadow-sm"
                 components={{
                   DayContent: ({ date }) => DayContent(date),
                 }}
