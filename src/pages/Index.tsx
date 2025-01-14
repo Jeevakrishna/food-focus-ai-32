@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CameraCapture } from "@/components/food/CameraCapture";
 import { FoodEntryList } from "@/components/food/FoodEntryList";
+import { FoodInsights } from "@/components/food/FoodInsights";
 
 interface MacroData {
   calories: number;
@@ -247,6 +248,11 @@ const Index = () => {
           <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Recent Entries</h2>
             <FoodEntryList entries={macros} />
+          </div>
+
+          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
+            <h2 className="text-xl font-semibold mb-4">AI Insights</h2>
+            <FoodInsights entries={macros} />
           </div>
         </div>
       </div>
