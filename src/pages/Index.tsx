@@ -1,88 +1,68 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, Clock, Target } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
+import { Upload, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CameraCapture } from "@/components/food/CameraCapture";
 import { FoodEntryList } from "@/components/food/FoodEntryList";
 import { FoodInsights } from "@/components/food/FoodInsights";
-
-interface MacroData {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  timestamp: string;
-  description: string;
-  health_score?: number;
-  health_description?: string;
-}
-
-const COLORS = ["#FF6B6B", "#4ECDC4", "#FFD93D"];
+import { DailyProgress } from "@/components/food/DailyProgress";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  saveFoodEntry, 
+  getFoodEntries, 
+  getTodayEntries,
+  getDailyTotals,
+  clearOldEntries 
+} from "@/utils/foodEntryManager";
 
 const Index = () => {
-  const [macros, setMacros] = useState<MacroData[]>([]);
+  const [entries, setEntries] = useState(getFoodEntries());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [goals, setGoals] = useState({ calories: 0 });
-  const [todayCalories, setTodayCalories] = useState(0);
+  const [goals] = useState(() => {
+    const saved = localStorage.getItem("macroGoals");
+    return saved ? JSON.parse(saved) : {
+      calories: 2000,
+      protein: 150,
+      carbs: 250,
+      fat: 70
+    };
+  });
 
   useEffect(() => {
-    const savedGoals = localStorage.getItem("macroGoals");
-    if (savedGoals) {
-      setGoals(JSON.parse(savedGoals));
-    }
-  }, []);
+    const updateTimeLeft = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      const diffInSeconds = Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
+      const hours = Math.floor(diffInSeconds / 3600);
+      const minutes = Math.floor((diffInSeconds % 3600) / 60);
+      
+      setTimeLeft(`${hours}h ${minutes}m`);
+    };
 
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayEntries = macros.filter(entry => 
-      entry.timestamp.startsWith(today)
-    );
-    const totalCalories = todayEntries.reduce((sum, entry) => 
-      sum + entry.calories, 0
-    );
-    setTodayCalories(totalCalories);
-
-    if (goals.calories > 0) {
-      const remaining = goals.calories - totalCalories;
-      if (remaining > 0) {
-        toast({
-          title: "Calorie Goal Progress",
-          description: `You have ${remaining} kcal remaining today. Log your next meal to stay on track!`,
-        });
-      } else {
-        toast({
-          title: "Goal Exceeded!",
-          description: `Great job! You've exceeded your goal by ${Math.abs(remaining)} kcal today!`,
-        });
-      }
-    }
-  }, [macros, goals.calories]);
-
-  const updateTimeLeft = () => {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    
-    const diffInSeconds = Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
-    const hours = Math.floor(diffInSeconds / 3600);
-    const minutes = Math.floor((diffInSeconds % 3600) / 60);
-    
-    setTimeLeft(`${hours}h ${minutes}m`);
-  };
-
-  useEffect(() => {
     updateTimeLeft();
     const interval = setInterval(updateTimeLeft, 60000);
-    return () => clearInterval(interval);
+
+    // Clear old entries at midnight
+    const midnightCheck = setInterval(() => {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        clearOldEntries();
+        setEntries(getFoodEntries());
+      }
+    }, 60000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(midnightCheck);
+    };
   }, []);
 
   const analyzeImage = async (base64Image: string) => {
@@ -92,24 +72,22 @@ const Index = () => {
         body: { image: base64Image }
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to analyze food');
-      }
+      if (error) throw new Error(error.message || 'Failed to analyze food');
+      if (!data) throw new Error('No data returned from analysis');
 
-      if (!data) {
-        throw new Error('No data returned from analysis');
-      }
-
-      const newMacro = {
+      const newEntry = {
         ...data,
         timestamp: new Date().toISOString(),
       };
 
-      setMacros([...macros, newMacro]);
+      saveFoodEntry(newEntry);
+      setEntries(getFoodEntries());
+      
+      const totals = getDailyTotals();
+      const goalMet = totals.calories >= goals.calories;
       
       toast({
-        title: "Food tracked successfully!",
+        title: goalMet ? "Daily Goal Achieved! 🎉" : "Food tracked successfully!",
         description: data.description,
       });
     } catch (error) {
@@ -134,31 +112,7 @@ const Index = () => {
     reader.readAsDataURL(file);
   };
 
-  const getTotalMacros = () => {
-    const totals = macros.reduce(
-      (acc, curr) => ({
-        protein: acc.protein + curr.protein,
-        carbs: acc.carbs + curr.carbs,
-        fat: acc.fat + curr.fat,
-      }),
-      { protein: 0, carbs: 0, fat: 0 }
-    );
-
-    const total = totals.protein + totals.carbs + totals.fat;
-    if (total === 0) return { protein: 0, carbs: 0, fat: 0 };
-
-    return {
-      protein: Math.round((totals.protein / total) * 100),
-      carbs: Math.round((totals.carbs / total) * 100),
-      fat: Math.round((totals.fat / total) * 100),
-    };
-  };
-
-  const pieData = [
-    { name: "Protein", value: getTotalMacros().protein },
-    { name: "Carbs", value: getTotalMacros().carbs },
-    { name: "Fat", value: getTotalMacros().fat },
-  ];
+  const totals = getDailyTotals();
 
   return (
     <div className="min-h-screen pb-20 bg-gradient-to-b from-background to-background/80">
@@ -176,25 +130,18 @@ const Index = () => {
           <ThemeToggle />
         </div>
 
-        {goals.calories > 0 && (
-          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-primary" />
-                <h2 className="font-semibold">Daily Calorie Goal</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {todayCalories} / {goals.calories} kcal
-              </span>
-            </div>
-            <Progress 
-              value={(todayCalories / goals.calories) * 100} 
-              className="h-3"
-            />
-          </div>
-        )}
-
         <div className="grid gap-6">
+          <DailyProgress
+            currentCalories={totals.calories}
+            goalCalories={goals.calories}
+            protein={totals.protein}
+            carbs={totals.carbs}
+            fat={totals.fat}
+            proteinGoal={goals.protein}
+            carbsGoal={goals.carbs}
+            fatGoal={goals.fat}
+          />
+
           <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Track Your Food</h2>
             <div className="flex gap-4 justify-center">
@@ -217,43 +164,8 @@ const Index = () => {
             />
           </div>
 
-          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
-            <h2 className="text-xl font-semibold mb-4">Today's Macros</h2>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ value }) => `${value}%`}
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
-            <h2 className="text-xl font-semibold mb-4">Recent Entries</h2>
-            <FoodEntryList entries={macros} />
-          </div>
-
-          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
-            <h2 className="text-xl font-semibold mb-4">AI Insights</h2>
-            <FoodInsights entries={macros} />
-          </div>
+          <FoodEntryList entries={getTodayEntries()} title="Today's Entries" />
+          <FoodInsights entries={entries} />
         </div>
       </div>
     </div>
