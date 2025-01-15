@@ -19,17 +19,17 @@ const nutritionDatabase = {
 function findInLocalDatabase(foodName: string) {
   const normalizedName = foodName.toLowerCase().trim();
   
-  // Check exact matches
+  // Check exact matches first
   for (const [key, value] of Object.entries(nutritionDatabase)) {
     if (normalizedName === key) {
-      return { ...value, confidence: 1, source: 'local' };
+      return { ...value, confidence: 1, source: 'local' as const };
     }
   }
   
-  // Check partial matches
+  // Then check partial matches
   for (const [key, value] of Object.entries(nutritionDatabase)) {
     if (normalizedName.includes(key) || key.includes(normalizedName)) {
-      return { ...value, confidence: 0.8, source: 'local' };
+      return { ...value, confidence: 0.8, source: 'local' as const };
     }
   }
   
