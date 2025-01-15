@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getDailyTotals } from "@/utils/foodEntryManager";
+import { getDailyTotals, exportFoodData } from "@/utils/foodEntryManager";
 
 interface DayProgress {
   date: string;
@@ -162,10 +162,12 @@ const CalendarPage = () => {
     }
 
     const achieved = dayProgress?.achieved || (isToday && todayAchieved);
+    const isPastDay = day < new Date(new Date().setHours(0, 0, 0, 0));
 
     return (
       <div className={`h-full w-full rounded-full ${
-        achieved ? "bg-success/20" : ""
+        achieved ? "bg-success/20" : 
+        (isPastDay && !achieved) ? "bg-destructive/20" : ""
       }`}>
         <div className="h-7 w-7 flex items-center justify-center font-medium">
           {format(day, "d")}
@@ -181,9 +183,7 @@ const CalendarPage = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <CalendarIcon className="w-6 h-6 text-primary" />
-              <h1 className="text-2xl font-semibold">
-                Progress Calendar
-              </h1>
+              <h1 className="text-2xl font-semibold">Progress Calendar</h1>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="w-4 h-4" />
@@ -207,6 +207,10 @@ const CalendarPage = () => {
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full bg-success/20" />
                     <span className="text-sm text-muted-foreground">Goal Achieved</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-destructive/20" />
+                    <span className="text-sm text-muted-foreground">Goal Missed</span>
                   </div>
                 </div>
               </div>
@@ -241,7 +245,11 @@ const CalendarPage = () => {
                 </Card>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-4">
+                <Button onClick={exportFoodData} variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Food Data
+                </Button>
                 <Button onClick={exportData} variant="outline">
                   <Download className="w-4 h-4 mr-2" />
                   Export Monthly Data

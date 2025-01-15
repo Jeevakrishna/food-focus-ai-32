@@ -14,11 +14,19 @@ export interface FoodEntry {
 }
 
 const STORAGE_KEY = 'foodEntries';
+const CALENDAR_PROGRESS_KEY = 'calorieProgress';
 
 export const saveFoodEntry = (entry: FoodEntry) => {
   const entries = getFoodEntries();
   entries.push(entry);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  
+  // Update calendar progress
+  const goals = JSON.parse(localStorage.getItem('macroGoals') || '{"calories": 2000}');
+  const todayTotals = getDailyTotals();
+  const achieved = todayTotals.calories >= goals.calories;
+  
+  updateCalendarProgress(achieved);
 };
 
 export const getFoodEntries = (): FoodEntry[] => {
@@ -50,4 +58,49 @@ export const clearOldEntries = () => {
     entry.timestamp.startsWith(today)
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(recentEntries));
+};
+
+export const updateCalendarProgress = (achieved: boolean) => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const stored = localStorage.getItem(CALENDAR_PROGRESS_KEY);
+  const progress = stored ? JSON.parse(stored) : [];
+  
+  const existingIndex = progress.findIndex((p: any) => p.date === today);
+  if (existingIndex >= 0) {
+    progress[existingIndex].achieved = achieved;
+  } else {
+    progress.push({
+      date: today,
+      achieved,
+      calories: getDailyTotals().calories
+    });
+  }
+  
+  localStorage.setItem(CALENDAR_PROGRESS_KEY, JSON.stringify(progress));
+};
+
+export const exportFoodData = () => {
+  const entries = getFoodEntries();
+  const csvContent = [
+    ['Date', 'Time', 'Description', 'Calories', 'Protein (g)', 'Carbs (g)', 'Fat (g)'],
+    ...entries.map(entry => [
+      format(new Date(entry.timestamp), 'yyyy-MM-dd'),
+      format(new Date(entry.timestamp), 'HH:mm'),
+      entry.description,
+      entry.calories,
+      entry.protein,
+      entry.carbs,
+      entry.fat
+    ])
+  ].map(row => row.join(',')).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `food-entries-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
 };
