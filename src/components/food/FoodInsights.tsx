@@ -1,4 +1,4 @@
-import { Brain, Lightbulb, TrendingUp } from "lucide-react";
+import { Brain } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -21,95 +21,43 @@ interface FoodInsightsProps {
 }
 
 export const FoodInsights = ({ entries }: FoodInsightsProps) => {
-  const analyzeMealPatterns = () => {
-    if (entries.length === 0) return null;
-
-    const weekendEntries = entries.filter(entry => {
-      const day = new Date(entry.timestamp).getDay();
-      return day === 0 || day === 6; // 0 is Sunday, 6 is Saturday
-    });
-
-    const weekdayEntries = entries.filter(entry => {
-      const day = new Date(entry.timestamp).getDay();
-      return day !== 0 && day !== 6;
-    });
-
-    const avgWeekendCalories = weekendEntries.reduce((sum, entry) => sum + entry.calories, 0) / weekendEntries.length;
-    const avgWeekdayCalories = weekdayEntries.reduce((sum, entry) => sum + entry.calories, 0) / weekdayEntries.length;
-
-    if (avgWeekendCalories > avgWeekdayCalories * 1.2) {
-      return "You tend to consume more calories on weekends. Consider meal prepping for weekends to stay on track!";
-    }
-    return "Your calorie intake is fairly consistent throughout the week. Great job maintaining consistency!";
-  };
-
   const suggestNextMeal = () => {
-    if (entries.length === 0) return null;
+    if (entries.length === 0) {
+      return "Try starting with a balanced breakfast like oatmeal with fruits and nuts.";
+    }
 
     const recentEntries = entries.slice(-3);
     const totalProtein = recentEntries.reduce((sum, entry) => sum + entry.protein, 0);
     const totalCarbs = recentEntries.reduce((sum, entry) => sum + entry.carbs, 0);
     const totalFat = recentEntries.reduce((sum, entry) => sum + entry.fat, 0);
+    const totalCalories = recentEntries.reduce((sum, entry) => sum + entry.calories, 0);
 
+    // Suggest meals based on nutritional needs
     if (totalProtein < 50) {
-      return "Consider adding a protein-rich meal like grilled chicken or fish with vegetables.";
+      return "Try grilled chicken breast with quinoa and roasted vegetables. This meal is high in protein and provides balanced nutrients.";
     } else if (totalCarbs < 100) {
-      return "You might benefit from complex carbs like quinoa or sweet potatoes in your next meal.";
+      return "How about sweet potato with black beans and brown rice? This combination provides complex carbs and fiber.";
     } else if (totalFat < 30) {
-      return "Try adding healthy fats like avocado or nuts to balance your macros.";
+      return "Consider salmon with avocado and mixed greens. This meal offers healthy fats and omega-3s.";
+    } else if (totalCalories < 1200) {
+      return "A balanced meal of turkey wrap with whole grain tortilla, hummus, and vegetables would be perfect.";
     }
-    return "Your recent meals are well-balanced! Keep up the good work!";
-  };
 
-  const getInterestingFact = () => {
-    const facts = [
-      "Did you know? The word 'protein' comes from the Greek word 'protos', meaning 'first' - reflecting its fundamental importance in nutrition.",
-      "Carbohydrates are your brain's preferred source of energy!",
-      "Your body can store enough carbohydrates to fuel about 2,000 calories worth of physical activity.",
-      "Healthy fats are essential for absorbing vitamins A, D, E, and K.",
-      "The human body can only store protein for a short time, which is why regular intake is important.",
-    ];
-    return facts[Math.floor(Math.random() * facts.length)];
+    return "A light meal of Greek salad with grilled tofu would be a great choice to maintain your balanced intake.";
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
-            Pattern Analysis
-          </CardTitle>
-          <CardDescription>Your eating patterns and trends</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">{analyzeMealPatterns()}</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
             Meal Suggestion
           </CardTitle>
-          <CardDescription>AI-powered recommendation</CardDescription>
+          <CardDescription>Based on your recent nutrition intake</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{suggestNextMeal()}</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="w-5 h-5" />
-            Fun Fact
-          </CardTitle>
-          <CardDescription>Learn something new</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">{getInterestingFact()}</p>
         </CardContent>
       </Card>
     </div>
