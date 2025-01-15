@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getDailyTotals } from "@/utils/foodEntryManager";
 
 interface DayProgress {
   date: string;
@@ -151,12 +152,20 @@ const CalendarPage = () => {
       isSameDay(new Date(p.date), day)
     );
 
+    // Check if today's calories meet the goal
+    const isToday = isSameDay(day, new Date());
+    let todayAchieved = false;
+    
+    if (isToday) {
+      const totals = getDailyTotals();
+      todayAchieved = totals.calories >= calorieGoal;
+    }
+
+    const achieved = dayProgress?.achieved || (isToday && todayAchieved);
+
     return (
       <div className={`h-full w-full rounded-full ${
-        dayProgress ? (dayProgress.achieved 
-          ? "bg-success/20" 
-          : "bg-destructive/20"
-        ) : ""
+        achieved ? "bg-success/20" : ""
       }`}>
         <div className="h-7 w-7 flex items-center justify-center font-medium">
           {format(day, "d")}
@@ -198,10 +207,6 @@ const CalendarPage = () => {
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full bg-success/20" />
                     <span className="text-sm text-muted-foreground">Goal Achieved</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-destructive/20" />
-                    <span className="text-sm text-muted-foreground">Goal Missed</span>
                   </div>
                 </div>
               </div>
