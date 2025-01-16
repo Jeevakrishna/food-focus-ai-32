@@ -165,7 +165,9 @@ const Index = () => {
           </div>
 
           <FoodEntryList entries={getTodayEntries()} title="Today's Entries" />
-          <FoodInsights entries={entries} />
+          <div className="mt-4">
+            <FoodInsights entries={entries} />
+          </div>
         </div>
       </div>
     </div>
