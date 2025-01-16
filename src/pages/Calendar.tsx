@@ -248,7 +248,7 @@ const CalendarPage = () => {
               <div className="flex justify-end">
                 <Button onClick={exportFoodData} variant="outline">
                   <Download className="w-4 h-4 mr-2" />
-                  Export Food Data
+                  Export Monthly Data
                 </Button>
               </div>
             </div>
