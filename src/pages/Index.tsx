@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CameraCapture } from "@/components/food/CameraCapture";
 import { FoodEntryList } from "@/components/food/FoodEntryList";
 import { FoodInsights } from "@/components/food/FoodInsights";
+import { FoodFacts } from "@/components/food/FoodFacts";
 import { DailyProgress } from "@/components/food/DailyProgress";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -165,6 +166,9 @@ const Index = () => {
           </div>
 
           <FoodEntryList entries={getTodayEntries()} title="Today's Entries" />
+          <div className="mt-4">
+            <FoodFacts entries={entries} />
+          </div>
           <div className="mt-4">
             <FoodInsights entries={entries} />
           </div>
