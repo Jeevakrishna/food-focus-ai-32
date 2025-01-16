@@ -3,7 +3,6 @@ import { Upload, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CameraCapture } from "@/components/food/CameraCapture";
 import { FoodEntryList } from "@/components/food/FoodEntryList";
 import { FoodInsights } from "@/components/food/FoodInsights";
@@ -128,7 +127,6 @@ const Index = () => {
               <span>Time until next day: {timeLeft}</span>
             </div>
           </div>
-          <ThemeToggle />
         </div>
 
         <div className="grid gap-6">
