@@ -245,14 +245,10 @@ const CalendarPage = () => {
                 </Card>
               </div>
 
-              <div className="flex justify-end gap-4">
+              <div className="flex justify-end">
                 <Button onClick={exportFoodData} variant="outline">
                   <Download className="w-4 h-4 mr-2" />
                   Export Food Data
-                </Button>
-                <Button onClick={exportData} variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Monthly Data
                 </Button>
               </div>
             </div>
