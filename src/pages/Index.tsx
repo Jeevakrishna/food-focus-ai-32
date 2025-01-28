@@ -9,6 +9,7 @@ import { FoodInsights } from "@/components/food/FoodInsights";
 import { FoodFacts } from "@/components/food/FoodFacts";
 import { DailyProgress } from "@/components/food/DailyProgress";
 import { supabase } from "@/integrations/supabase/client";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { 
   saveFoodEntry, 
   getFoodEntries, 
@@ -113,6 +114,17 @@ const Index = () => {
   };
 
   const totals = getDailyTotals();
+  
+  // Calculate macro percentages
+  const totalMacros = totals.protein * 4 + totals.carbs * 4 + totals.fat * 9; // Convert to calories
+  const macroData = [
+    { name: 'Protein', value: totals.protein * 4, color: '#FF6B6B' },
+    { name: 'Carbs', value: totals.carbs * 4, color: '#4ECDC4' },
+    { name: 'Fat', value: totals.fat * 9, color: '#FFD93D' }
+  ].map(item => ({
+    ...item,
+    percentage: totalMacros > 0 ? Math.round((item.value / totalMacros) * 100) : 0
+  }));
 
   return (
     <div className="min-h-screen pb-20 bg-gradient-to-b from-background to-background/80">
@@ -161,6 +173,32 @@ const Index = () => {
               onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
               disabled={isLoading}
             />
+          </div>
+
+          {/* Add Macro Distribution Chart */}
+          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
+            <h2 className="text-xl font-semibold mb-4">Macro Distribution</h2>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={macroData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label={({ name, percentage }) => `${name}: ${percentage}%`}
+                  >
+                    {macroData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           <FoodEntryList entries={getTodayEntries()} title="Today's Entries" />
