@@ -118,9 +118,9 @@ const Index = () => {
   // Calculate macro percentages
   const totalMacros = totals.protein * 4 + totals.carbs * 4 + totals.fat * 9; // Convert to calories
   const macroData = [
-    { name: 'Protein', value: totals.protein * 4, color: '#8B5CF6' }, // Vivid Purple
-    { name: 'Carbs', value: totals.carbs * 4, color: '#F97316' },    // Bright Orange
-    { name: 'Fat', value: totals.fat * 9, color: '#0EA5E9' }         // Ocean Blue
+    { name: 'Protein', value: totals.protein * 4, color: '#FF6B6B' },
+    { name: 'Carbs', value: totals.carbs * 4, color: '#4ECDC4' },
+    { name: 'Fat', value: totals.fat * 9, color: '#FFD93D' }
   ].map(item => ({
     ...item,
     percentage: totalMacros > 0 ? Math.round((item.value / totalMacros) * 100) : 0
