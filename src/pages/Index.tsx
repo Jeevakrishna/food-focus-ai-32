@@ -127,7 +127,7 @@ const Index = () => {
   }));
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-b from-background to-background/80">
+    <div className="min-h-screen pb-20 bg-white">
       <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fadeIn">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -153,7 +153,7 @@ const Index = () => {
             fatGoal={goals.fat}
           />
 
-          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Track Your Food</h2>
             <div className="flex gap-4 justify-center">
               <Button
@@ -175,8 +175,7 @@ const Index = () => {
             />
           </div>
 
-          {/* Add Macro Distribution Chart */}
-          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Macro Distribution</h2>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
