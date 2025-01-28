@@ -61,9 +61,9 @@ export default {
           light: "#FDE68A",
         },
         macro: {
-          protein: "#FF6B6B",
-          carbs: "#4ECDC4",
-          fat: "#FFD93D",
+          protein: "#8B5CF6",
+          carbs: "#F97316", 
+          fat: "#0EA5E9",
         },
       },
       keyframes: {
