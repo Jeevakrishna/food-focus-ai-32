@@ -9,25 +9,34 @@ import Index from "./pages/Index";
 import Goals from "./pages/Goals";
 import Calendar from "./pages/Calendar";
 
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="system" enableSystem>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/calendar" element={<Calendar />} />
-          </Routes>
-          <Navigation />
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  const handleFoodUpload = (foodItem: FoodItem) => {
+    // This function will be passed to FoodUpload component
+    updateDailyGoals(foodItem);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="system" enableSystem>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/calendar" element={<Calendar />} />
+            </Routes>
+            <Navigation />
+            
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
