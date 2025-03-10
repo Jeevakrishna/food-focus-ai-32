@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CameraCapture } from "@/components/food/CameraCapture";
 import { FoodAnalysisResult } from "@/components/food/FoodAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
-import { saveFoodEntry, getFoodEntries } from "@/utils/foodEntryManager";
+import { saveFoodEntry, getFoodEntries, getDailyTotals } from "@/utils/foodEntryManager";
 
 interface FoodTrackingProps {
   goals: {
@@ -16,9 +16,10 @@ interface FoodTrackingProps {
     fat: number;
   };
   setEntries: React.Dispatch<React.SetStateAction<any[]>>;
+  updateTotals: () => void;
 }
 
-export const FoodTracking = ({ goals, setEntries }: FoodTrackingProps) => {
+export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +48,11 @@ export const FoodTracking = ({ goals, setEntries }: FoodTrackingProps) => {
       saveFoodEntry(newEntry);
       setEntries(getFoodEntries());
       
-      const goalMet = data.calories >= goals.calories;
+      // Update the daily totals to reflect the new food entry
+      updateTotals();
+      
+      const dailyTotals = getDailyTotals();
+      const goalMet = dailyTotals.calories >= goals.calories;
       
       toast({
         title: goalMet ? "Daily Goal Achieved! 🎉" : "Food tracked successfully!",

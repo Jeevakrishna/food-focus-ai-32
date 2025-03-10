@@ -8,11 +8,21 @@ import { TimeDisplay } from "@/components/food/TimeDisplay";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { useFoodEntries } from "@/hooks/useFoodEntries";
 import { getTodayEntries, getDailyTotals } from "@/utils/foodEntryManager";
+import { useState, useEffect } from "react";
 
 const Index = () => {
   const { entries, setEntries } = useFoodEntries();
   const goals = useNutritionGoals();
-  const totals = getDailyTotals();
+  const [totals, setTotals] = useState(getDailyTotals());
+
+  // Update totals whenever entries change
+  useEffect(() => {
+    updateTotals();
+  }, [entries]);
+
+  const updateTotals = () => {
+    setTotals(getDailyTotals());
+  };
 
   return (
     <div className="min-h-screen pb-20 bg-background">
@@ -33,7 +43,11 @@ const Index = () => {
             fatGoal={goals.fat}
           />
 
-          <FoodTracking goals={goals} setEntries={setEntries} />
+          <FoodTracking 
+            goals={goals} 
+            setEntries={setEntries} 
+            updateTotals={updateTotals} 
+          />
 
           <FoodEntryList entries={getTodayEntries()} title="Today's Entries" />
           

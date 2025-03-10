@@ -18,8 +18,16 @@ export const useFoodEntries = () => {
       }
     }, 60000);
 
+    // Setup a listener for storage events to sync entries across tabs
+    const handleStorageChange = () => {
+      setEntries(getFoodEntries());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       clearInterval(midnightCheck);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
