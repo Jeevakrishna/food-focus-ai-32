@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Upload, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -8,8 +9,8 @@ import { FoodEntryList } from "@/components/food/FoodEntryList";
 import { FoodInsights } from "@/components/food/FoodInsights";
 import { FoodFacts } from "@/components/food/FoodFacts";
 import { DailyProgress } from "@/components/food/DailyProgress";
+import { FoodAnalysisResult } from "@/components/food/FoodAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { 
   saveFoodEntry, 
   getFoodEntries, 
@@ -24,6 +25,8 @@ const Index = () => {
   const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [analyzedFood, setAnalyzedFood] = useState(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const [goals] = useState(() => {
     const saved = localStorage.getItem("macroGoals");
     return saved ? JSON.parse(saved) : {
@@ -68,6 +71,7 @@ const Index = () => {
 
   const analyzeImage = async (base64Image: string) => {
     setIsLoading(true);
+    setShowAnalysis(false);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-food', {
         body: { image: base64Image }
@@ -75,6 +79,9 @@ const Index = () => {
 
       if (error) throw new Error(error.message || 'Failed to analyze food');
       if (!data) throw new Error('No data returned from analysis');
+
+      setAnalyzedFood(data);
+      setShowAnalysis(true);
 
       const newEntry = {
         ...data,
@@ -114,32 +121,6 @@ const Index = () => {
   };
 
   const totals = getDailyTotals();
-  
-  // Calculate macro percentages and calories
-  const totalMacros = totals.protein * 4 + totals.carbs * 4 + totals.fat * 9; // Convert to calories
-  const macroData = [
-    { 
-      name: 'Protein', 
-      value: totals.protein * 4, 
-      calories: totals.protein * 4,
-      color: '#8B5CF6' 
-    },
-    { 
-      name: 'Carbs', 
-      value: totals.carbs * 4, 
-      calories: totals.carbs * 4,
-      color: '#F97316' 
-    },
-    { 
-      name: 'Fat', 
-      value: totals.fat * 9, 
-      calories: totals.fat * 9,
-      color: '#0EA5E9' 
-    }
-  ].map(item => ({
-    ...item,
-    percentage: totalMacros > 0 ? Math.round((item.value / totalMacros) * 100) : 0
-  }));
 
   return (
     <div className="min-h-screen pb-20 bg-background">
@@ -174,6 +155,7 @@ const Index = () => {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 <Upload className="w-5 h-5 mr-2" />
                 Upload Image
@@ -188,40 +170,25 @@ const Index = () => {
               onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
               disabled={isLoading}
             />
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm border">
-            <h2 className="text-xl font-semibold mb-4">Macro Distribution</h2>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={macroData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, percentage, calories }) => 
-                      `${name}: ${percentage}% (${Math.round(calories)} cal)`
-                    }
-                  >
-                    {macroData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number, name: string) => 
-                      [`${Math.round(value)} calories`, name]
-                    }
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+            
+            {isLoading && (
+              <div className="text-center mt-6">
+                <div className="animate-pulse text-muted-foreground">
+                  Analyzing your food image...
+                </div>
+              </div>
+            )}
+            
+            <div className="mt-6">
+              <FoodAnalysisResult 
+                isVisible={showAnalysis} 
+                foodData={analyzedFood} 
+              />
             </div>
           </div>
 
           <FoodEntryList entries={getTodayEntries()} title="Today's Entries" />
+          
           <div className="mt-4">
             <FoodFacts entries={entries} />
           </div>

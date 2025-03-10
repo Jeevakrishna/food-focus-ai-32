@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -14,6 +15,14 @@ const nutritionDatabase = {
   chicken: { calories: 335, protein: 38, carbs: 0, fat: 20 },
   fish: { calories: 206, protein: 22, carbs: 0, fat: 12 },
   sandwich: { calories: 250, protein: 12, carbs: 34, fat: 8 },
+  apple: { calories: 52, protein: 0.3, carbs: 14, fat: 0.2 },
+  banana: { calories: 89, protein: 1.1, carbs: 23, fat: 0.3 },
+  orange: { calories: 47, protein: 0.9, carbs: 12, fat: 0.1 },
+  yogurt: { calories: 59, protein: 3.5, carbs: 5, fat: 3.3 },
+  eggs: { calories: 155, protein: 13, carbs: 1.1, fat: 11 },
+  cheese: { calories: 402, protein: 25, carbs: 1.3, fat: 33 },
+  nuts: { calories: 607, protein: 21, carbs: 20, fat: 54 },
+  chocolate: { calories: 546, protein: 4.9, carbs: 61, fat: 31 },
 };
 
 function findInLocalDatabase(foodName: string) {
@@ -83,6 +92,20 @@ async function analyzeImageWithGroq(imageBytes: Uint8Array): Promise<{ predictio
   };
 }
 
+// Calculate macronutrient percentages
+function calculateMacroPercentages(calories: number, protein: number, carbs: number, fat: number) {
+  const proteinCalories = protein * 4;
+  const carbCalories = carbs * 4;
+  const fatCalories = fat * 9;
+  const totalCalories = proteinCalories + carbCalories + fatCalories;
+  
+  return {
+    proteinPercentage: Math.round((proteinCalories / totalCalories) * 100) || 0,
+    carbsPercentage: Math.round((carbCalories / totalCalories) * 100) || 0,
+    fatPercentage: Math.round((fatCalories / totalCalories) * 100) || 0
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -107,12 +130,24 @@ serve(async (req) => {
     
     if (localMatch) {
       console.log('Found match in local database:', localMatch);
+      const { proteinPercentage, carbsPercentage, fatPercentage } = calculateMacroPercentages(
+        localMatch.calories,
+        localMatch.protein,
+        localMatch.carbs,
+        localMatch.fat
+      );
+      
       return new Response(
         JSON.stringify({
           description: groqResult.prediction,
           ...localMatch,
           confidence: localMatch.confidence,
-          source: 'local'
+          source: 'local',
+          macroPercentages: {
+            protein: proteinPercentage,
+            carbs: carbsPercentage,
+            fat: fatPercentage
+          }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -120,15 +155,31 @@ serve(async (req) => {
 
     // If no local match found, use the Groq prediction with default nutritional values
     console.log('No local match found, using AI prediction with default values');
+    const defaultValues = {
+      calories: 200,
+      protein: 10,
+      carbs: 25,
+      fat: 8,
+    };
+    
+    const { proteinPercentage, carbsPercentage, fatPercentage } = calculateMacroPercentages(
+      defaultValues.calories,
+      defaultValues.protein,
+      defaultValues.carbs,
+      defaultValues.fat
+    );
+    
     return new Response(
       JSON.stringify({
         description: groqResult.prediction,
-        calories: 200,
-        protein: 10,
-        carbs: 25,
-        fat: 8,
+        ...defaultValues,
         confidence: groqResult.confidence,
-        source: 'ai'
+        source: 'ai',
+        macroPercentages: {
+          protein: proteinPercentage,
+          carbs: carbsPercentage,
+          fat: fatPercentage
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
