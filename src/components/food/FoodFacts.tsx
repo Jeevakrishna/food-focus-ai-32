@@ -31,29 +31,73 @@ export const FoodFacts = ({ entries }: FoodFactsProps) => {
     const lastEntry = entries[entries.length - 1];
     const foodName = lastEntry.description.toLowerCase();
 
-    // Check if it's the special unhealthy food
+    // Check if it's the special unhealthy food (chips)
     if (foodName === "chips" || lastEntry.isUnhealthy) {
       return "Bad food! Potato chips are high in calories, fat, and sodium, and regular consumption may contribute to health issues like obesity and heart disease.";
     }
 
-    // Add more food facts as needed
-    const foodFacts: { [key: string]: string } = {
-      banana: "Bananas are technically berries, and they float in water because they are 75% water!",
-      apple: "Apples are members of the rose family, along with pears and plums.",
-      chicken: "Chicken is one of the most protein-rich foods, with about 31g of protein per 100g!",
-      rice: "Rice has been cultivated for more than 10,000 years and feeds half the world's population.",
-      egg: "An egg's shell can have up to 17,000 tiny pores on its surface.",
-      default: "Every food you eat has a unique story and nutritional profile that contributes to your health!"
+    // Database of fun facts for different foods
+    const foodFacts: { [key: string]: { fact: string; isGood: boolean } } = {
+      banana: {
+        fact: "Bananas are technically berries, and they float in water because they are 75% water! A good source of potassium and fiber.",
+        isGood: true
+      },
+      apple: {
+        fact: "Apples are members of the rose family, along with pears and plums. An apple a day really might keep the doctor away!",
+        isGood: true
+      },
+      chicken: {
+        fact: "Chicken is one of the most protein-rich foods, with about 31g of protein per 100g! Perfect for building those muscles.",
+        isGood: true
+      },
+      rice: {
+        fact: "Rice has been cultivated for more than 10,000 years and feeds half the world's population. A versatile and energy-packed good food!",
+        isGood: true
+      },
+      egg: {
+        fact: "An egg's shell can have up to 17,000 tiny pores on its surface. Nature's perfect protein package!",
+        isGood: true
+      },
+      pizza: {
+        fact: "Pizza is everyone's favorite cheat meal. Deliciously 'bad' but oh-so-satisfying! Everything in moderation, right?",
+        isGood: false
+      },
+      burger: {
+        fact: "The humble burger - America's favorite 'naughty' food. Can be part of a balanced diet if you don't overdo it!",
+        isGood: false
+      },
+      salad: {
+        fact: "Salads can pack more nutrients than almost any other single dish. Definitely a 'good food' superstar!",
+        isGood: true
+      },
+      pasta: {
+        fact: "Pasta was likely first created in China, not Italy! Complex carbs that give you energy - good food when paired with veggies.",
+        isGood: true
+      },
+      chocolate: {
+        fact: "Dark chocolate contains antioxidants that may benefit your heart. A little bit of this 'bad' food might actually be good for you!",
+        isGood: false
+      },
+      yogurt: {
+        fact: "Yogurt contains probiotics that support your gut health. A deliciously creamy good food for your microbiome!",
+        isGood: true
+      },
+      fish: {
+        fact: "Fish are rich in omega-3 fatty acids that support brain health. Definitely swimming in the 'good food' category!",
+        isGood: true
+      }
     };
 
     // Check if we have a specific fact for this food
-    for (const [key, fact] of Object.entries(foodFacts)) {
+    for (const [key, { fact, isGood }] of Object.entries(foodFacts)) {
       if (foodName.includes(key)) {
-        return `Did you know that ${fact}`;
+        const goodBadLabel = isGood ? "Good food!" : "Treat food!";
+        return `${goodBadLabel} ${fact}`;
       }
     }
 
-    return foodFacts.default;
+    // Default fact if no specific food is recognized
+    return "Every food you eat has a unique story and nutritional profile! Remember, balance is key - enjoy a variety of foods for optimal health.";
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,11 +14,6 @@ import Calendar from "./pages/Calendar";
 const queryClient = new QueryClient();
 
 const App: React.FC = () => {
-  const handleFoodUpload = (foodItem: FoodItem) => {
-    // This function will be passed to FoodUpload component
-    updateDailyGoals(foodItem);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" enableSystem>
