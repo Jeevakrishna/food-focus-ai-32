@@ -1,24 +1,24 @@
+
 import { useState, useEffect } from 'react';
 import { Progress } from './ui/progress';
 
-interface DailyProgress {
+interface DailyProgressProps {
   calories: number;
-  targetCalories: number;
 }
 
-const DailyProgress = () => {
-  const [progress, setProgress] = useState<DailyProgress>({
-    calories: 0,
+const DailyProgress = ({ calories }: DailyProgressProps) => {
+  const [progress, setProgress] = useState({
+    calories: calories || 0,
     targetCalories: 2000 // Default target, you can make this customizable
   });
 
-  // Function to update calories
-  const updateCalories = (newCalories: number) => {
+  // Update when calories prop changes
+  useEffect(() => {
     setProgress(prev => ({
       ...prev,
-      calories: prev.calories + newCalories
+      calories: calories
     }));
-  };
+  }, [calories]);
 
   // Calculate percentage for progress bar
   const caloriePercentage = (progress.calories / progress.targetCalories) * 100;
@@ -36,4 +36,4 @@ const DailyProgress = () => {
   );
 };
 
-export default DailyProgress; 
+export default DailyProgress;

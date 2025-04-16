@@ -1,3 +1,4 @@
+
 import { Brain } from "lucide-react";
 import {
   Card,
@@ -14,6 +15,7 @@ interface FoodEntry {
   carbs: number;
   fat: number;
   timestamp: string;
+  isUnhealthy?: boolean;
 }
 
 interface FoodFactsProps {
@@ -28,6 +30,11 @@ export const FoodFacts = ({ entries }: FoodFactsProps) => {
 
     const lastEntry = entries[entries.length - 1];
     const foodName = lastEntry.description.toLowerCase();
+
+    // Check if it's the special unhealthy food
+    if (foodName === "chips" || lastEntry.isUnhealthy) {
+      return "Bad food! Potato chips are high in calories, fat, and sodium, and regular consumption may contribute to health issues like obesity and heart disease.";
+    }
 
     // Add more food facts as needed
     const foodFacts: { [key: string]: string } = {
