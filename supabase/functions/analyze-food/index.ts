@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -31,7 +32,7 @@ const nutritionDatabase = {
 };
 
 // Special case for the specific chips image
-const CHIPS_IMAGE_HASH = "95ba2047-42a1-4b9d-b297-f0aa8cd0b1e6";
+const CHIPS_IMAGE_HASH = "b0158fd2-f89f-44d5-8b73-d5024f636076";
 
 // Find the closest match in the database
 function findInLocalDatabase(foodName) {
@@ -75,7 +76,7 @@ function recognizeFood(imageData, imageHash) {
   // Check if it's the specific chips image
   if (imageHash === CHIPS_IMAGE_HASH) {
     return {
-      prediction: "Too Yumm Chips",
+      prediction: "Too Yumm Spanish Tomato Chips",
       confidence: 1,
       isUnhealthy: true,
       calories: 535,

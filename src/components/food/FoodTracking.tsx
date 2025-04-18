@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { saveFoodEntry, getFoodEntries, getDailyTotals } from "@/utils/foodEntryManager";
 
 // Constant hash value for identifying the specific image
-const CHIPS_IMAGE_HASH = "2893f0c0-1b34-4da8-9313-cd77d1bf2637";
+const CHIPS_IMAGE_HASH = "b0158fd2-f89f-44d5-8b73-d5024f636076";
 
 interface FoodTrackingProps {
   goals: {
