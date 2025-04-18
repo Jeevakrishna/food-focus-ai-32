@@ -8,6 +8,9 @@ import { FoodAnalysisResult } from "@/components/food/FoodAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
 import { saveFoodEntry, getFoodEntries, getDailyTotals } from "@/utils/foodEntryManager";
 
+// Constant hash value for identifying the specific image
+const CHIPS_IMAGE_HASH = "95ba2047-42a1-4b9d-b297-f0aa8cd0b1e6";
+
 interface FoodTrackingProps {
   goals: {
     calories: number;
