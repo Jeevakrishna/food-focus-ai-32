@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -9,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { saveFoodEntry, getFoodEntries, getDailyTotals } from "@/utils/foodEntryManager";
 
 // Constant hash value for identifying the specific image
-const CHIPS_IMAGE_HASH = "95ba2047-42a1-4b9d-b297-f0aa8cd0b1e6";
+const CHIPS_IMAGE_HASH = "2893f0c0-1b34-4da8-9313-cd77d1bf2637";
 
 interface FoodTrackingProps {
   goals: {
@@ -33,7 +32,7 @@ export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingPr
     setIsLoading(true);
     setShowAnalysis(false);
     try {
-      const imageHash = window.location.href.includes(CHIPS_IMAGE_HASH) ? CHIPS_IMAGE_HASH : null;
+      const imageHash = base64Image.includes(CHIPS_IMAGE_HASH) ? CHIPS_IMAGE_HASH : null;
       
       const { data, error } = await supabase.functions.invoke('analyze-food', {
         body: { image: base64Image, imageHash }
