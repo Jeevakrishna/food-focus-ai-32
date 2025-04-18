@@ -1,4 +1,3 @@
-
 import { Brain } from "lucide-react";
 import {
   Card,
@@ -23,6 +22,22 @@ interface FoodInsightsProps {
 }
 
 export const FoodInsights = ({ entries }: FoodInsightsProps) => {
+  // Check if we should show the insights at all
+  const shouldShowInsights = () => {
+    if (entries.length === 0) return true;
+    
+    const lastEntry = entries[entries.length - 1];
+    // If it's chips, we don't want to show meal suggestions
+    if (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy) {
+      return false;
+    }
+    return true;
+  };
+
+  if (!shouldShowInsights()) {
+    return null; // Don't render anything if the last food was chips
+  }
+
   const suggestNextMeal = () => {
     if (entries.length === 0) {
       return "Try starting with a balanced breakfast like oatmeal with fruits and nuts.";
@@ -53,22 +68,6 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
 
     return "A light meal of Greek salad with grilled tofu would be a great choice to maintain your balanced intake.";
   };
-
-  // Check if we should show the insights at all
-  const shouldShowInsights = () => {
-    if (entries.length === 0) return true;
-    
-    const lastEntry = entries[entries.length - 1];
-    // If it's chips, we don't want to show meal suggestions
-    if (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy) {
-      return false;
-    }
-    return true;
-  };
-
-  if (!shouldShowInsights()) {
-    return null; // Don't render anything if the last food was chips
-  }
 
   return (
     <div className="grid gap-6">

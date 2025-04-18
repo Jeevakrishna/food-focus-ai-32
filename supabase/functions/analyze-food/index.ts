@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -30,7 +31,13 @@ const nutritionDatabase = {
   avocado: { calories: 160, protein: 2, carbs: 8.5, fat: 14.7 },
   sushi: { calories: 200, protein: 7, carbs: 38, fat: 3 },
   // Special case for the chips
-  chips: { calories: 535, protein: 6.8, carbs: 56, fat: 32, isUnhealthy: true }
+  chips: { 
+    calories: 535, 
+    protein: 6.8, 
+    carbs: 56, 
+    fat: 32, 
+    isUnhealthy: true 
+  }
 };
 
 // Find the closest match in the database
