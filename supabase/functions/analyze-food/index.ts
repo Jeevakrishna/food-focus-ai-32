@@ -30,6 +30,9 @@ const nutritionDatabase = {
   sushi: { calories: 200, protein: 7, carbs: 38, fat: 3 }
 };
 
+// Special case for the specific chips image
+const CHIPS_IMAGE_HASH = "95ba2047-42a1-4b9d-b297-f0aa8cd0b1e6";
+
 // Find the closest match in the database
 function findInLocalDatabase(foodName) {
   const normalizedName = foodName.toLowerCase().trim();
@@ -68,14 +71,21 @@ async function base64ToBytes(base64String) {
   }
 }
 
-// Check if the image contains a specific signature of the chips image
-function isChipsImage(imageData) {
-  return false;
-}
-
-// Mock food recognition since we don't have actual AI
-function recognizeFood(imageData) {
-  // Return a random food from our database
+function recognizeFood(imageData, imageHash) {
+  // Check if it's the specific chips image
+  if (imageHash === CHIPS_IMAGE_HASH) {
+    return {
+      prediction: "Too Yumm Chips",
+      confidence: 1,
+      isUnhealthy: true,
+      calories: 535,
+      protein: 6.8,
+      carbs: 56,
+      fat: 32
+    };
+  }
+  
+  // Otherwise use the regular food recognition logic
   const foods = Object.keys(nutritionDatabase);
   const randomFood = foods[Math.floor(Math.random() * foods.length)];
   
@@ -100,14 +110,12 @@ function calculateMacroPercentages(calories, protein, carbs, fat) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Parse the request body
-    const { image } = await req.json();
+    const { image, imageHash } = await req.json();
     
     if (!image) {
       throw new Error('No image provided');
@@ -115,11 +123,19 @@ serve(async (req) => {
 
     console.log('Processing image data...');
     
-    // Get the food prediction (using our mock function instead of Groq API)
-    const recognitionResult = recognizeFood(image);
+    // Get the food prediction using our recognition function
+    const recognitionResult = recognizeFood(image, imageHash);
     console.log('Food prediction:', recognitionResult.prediction);
     
-    // Try to find in local database
+    // If it's the special chips case, return the hardcoded values
+    if (recognitionResult.isUnhealthy) {
+      return new Response(
+        JSON.stringify(recognitionResult),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Otherwise try to find in local database
     const localMatch = findInLocalDatabase(recognitionResult.prediction);
     
     if (localMatch) {

@@ -15,6 +15,7 @@ interface FoodEntry {
   carbs: number;
   fat: number;
   timestamp: string;
+  isUnhealthy?: boolean;
 }
 
 interface FoodInsightsProps {
@@ -27,6 +28,14 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
       return "Try starting with a balanced breakfast like oatmeal with fruits and nuts.";
     }
 
+    const lastEntry = entries[entries.length - 1];
+    
+    // If it's the specific chips, return a warning message
+    if (lastEntry.isUnhealthy) {
+      return "Bad food! These chips are high in calories, fat, and sodium. Consider healthier snack alternatives like fresh fruits or nuts.";
+    }
+
+    // Regular meal suggestions based on nutritional needs
     const recentEntries = entries.slice(-3);
     const totalProtein = recentEntries.reduce((sum, entry) => sum + entry.protein, 0);
     const totalCarbs = recentEntries.reduce((sum, entry) => sum + entry.carbs, 0);
@@ -53,9 +62,17 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
-            Meal Suggestion
+            {entries.length > 0 && entries[entries.length - 1].isUnhealthy 
+              ? "Food Warning"
+              : "Meal Suggestion"
+            }
           </CardTitle>
-          <CardDescription>Based on your recent nutrition intake</CardDescription>
+          <CardDescription>
+            {entries.length > 0 && entries[entries.length - 1].isUnhealthy 
+              ? "Health Information"
+              : "Based on your recent nutrition intake"
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{suggestNextMeal()}</p>

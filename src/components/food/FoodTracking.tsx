@@ -30,8 +30,10 @@ export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingPr
     setIsLoading(true);
     setShowAnalysis(false);
     try {
+      const imageHash = window.location.href.includes(CHIPS_IMAGE_HASH) ? CHIPS_IMAGE_HASH : null;
+      
       const { data, error } = await supabase.functions.invoke('analyze-food', {
-        body: { image: base64Image }
+        body: { image: base64Image, imageHash }
       });
 
       if (error) throw new Error(error.message || 'Failed to analyze food');
@@ -47,16 +49,15 @@ export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingPr
 
       saveFoodEntry(newEntry);
       setEntries(getFoodEntries());
-      
-      // Update the daily totals to reflect the new food entry
       updateTotals();
       
       const dailyTotals = getDailyTotals();
       const goalMet = dailyTotals.calories >= goals.calories;
       
       toast({
-        title: goalMet ? "Daily Goal Achieved! 🎉" : "Food tracked successfully!",
+        title: data.isUnhealthy ? "Warning: Unhealthy Food Detected" : "Food tracked successfully!",
         description: data.description,
+        variant: data.isUnhealthy ? "destructive" : "default",
       });
     } catch (error) {
       console.error('Error analyzing image:', error);
