@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -72,6 +71,13 @@ async function base64ToBytes(base64String) {
   }
 }
 
+function findFoodInCSV(imageData) {
+  // This would be the connection to your CSV data
+  // For now, we'll return null to fall back to AI
+  // You'll need to implement the actual CSV lookup here
+  return null;
+}
+
 function recognizeFood(imageData, imageHash) {
   // Check if it's the specific chips image
   if (imageHash === CHIPS_IMAGE_HASH) {
@@ -84,6 +90,21 @@ function recognizeFood(imageData, imageHash) {
       carbs: 56,
       fat: 32
     };
+  }
+  
+  // First try to recognize from CSV dataset
+  try {
+    const csvMatch = findFoodInCSV(imageData);
+    if (csvMatch) {
+      return {
+        prediction: csvMatch.name,
+        confidence: 1,
+        source: 'csv',
+        ...csvMatch
+      };
+    }
+  } catch (error) {
+    console.error('Error searching CSV dataset:', error);
   }
   
   // Otherwise use the regular food recognition logic

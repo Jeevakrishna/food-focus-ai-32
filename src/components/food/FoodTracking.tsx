@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -57,7 +58,11 @@ export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingPr
       const goalMet = dailyTotals.calories >= goals.calories;
       
       toast({
-        title: data.isUnhealthy ? "Warning: Unhealthy Food Detected" : "Food tracked successfully!",
+        title: data.source === 'csv' 
+          ? "Found in database!" 
+          : data.isUnhealthy 
+            ? "Warning: Unhealthy Food Detected" 
+            : "Food tracked successfully!",
         description: data.description,
         variant: data.isUnhealthy ? "destructive" : "default",
       });
