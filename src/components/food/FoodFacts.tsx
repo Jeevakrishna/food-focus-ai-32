@@ -1,3 +1,4 @@
+
 import { Brain } from "lucide-react";
 import {
   Card,
@@ -30,9 +31,9 @@ export const FoodFacts = ({ entries }: FoodFactsProps) => {
     const lastEntry = entries[entries.length - 1];
     const foodName = lastEntry.description.toLowerCase();
 
-    // Check if it's the specific unhealthy food (chips)
-    if (lastEntry.isUnhealthy) {
-      return "Bad food! Potato chips are high in calories, fat, and sodium. Regular consumption may contribute to health issues like obesity and heart disease.";
+    // Check if it's the special unhealthy food (chips)
+    if (foodName === "chips" || lastEntry.isUnhealthy) {
+      return "Bad food! Potato chips are high in calories, fat, and sodium, and regular consumption may contribute to health issues like obesity and heart disease.";
     }
 
     // Database of fun facts for different foods
@@ -104,17 +105,9 @@ export const FoodFacts = ({ entries }: FoodFactsProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Brain className="w-5 h-5" />
-          {entries.length > 0 && entries[entries.length - 1].isUnhealthy 
-            ? "Food Warning"
-            : "Fun Fact About Your Food"
-          }
+          Fun Fact About Your Food
         </CardTitle>
-        <CardDescription>
-          {entries.length > 0 && entries[entries.length - 1].isUnhealthy 
-            ? "Health Information"
-            : "Learn something new about your food"
-          }
-        </CardDescription>
+        <CardDescription>Learn something new about your food</CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">{getFunFact()}</p>

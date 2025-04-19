@@ -31,25 +31,10 @@ export const findFoodInDataset = (foodName: string): null | {
   carbs: number;
   fat: number;
   confidence: number;
-  source?: string;
 } => {
   const normalizedName = foodName.toLowerCase().trim();
   
-  // First check the CSV dataset
-  try {
-    const csvMatch = findFoodInCSV(normalizedName);
-    if (csvMatch) {
-      return {
-        ...csvMatch,
-        confidence: 1,
-        source: 'csv'
-      };
-    }
-  } catch (error) {
-    console.error('Error searching CSV dataset:', error);
-  }
-
-  // Then check the local database
+  // Check for exact matches
   if (foodDatabase[normalizedName]) {
     return {
       ...foodDatabase[normalizedName],
@@ -67,20 +52,5 @@ export const findFoodInDataset = (foodName: string): null | {
     }
   }
 
-  return null;
-};
-
-interface CSVFoodData {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  name: string;
-}
-
-const findFoodInCSV = (foodName: string): CSVFoodData | null => {
-  // This would be the connection to your CSV data
-  // For now, we'll return null to fall back to AI
-  // You'll need to implement the actual CSV lookup here
   return null;
 };

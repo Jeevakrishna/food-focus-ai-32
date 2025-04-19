@@ -8,9 +8,6 @@ import { FoodAnalysisResult } from "@/components/food/FoodAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
 import { saveFoodEntry, getFoodEntries, getDailyTotals } from "@/utils/foodEntryManager";
 
-// Constant hash value for identifying the specific image
-const CHIPS_IMAGE_HASH = "b0158fd2-f89f-44d5-8b73-d5024f636076";
-
 interface FoodTrackingProps {
   goals: {
     calories: number;
@@ -33,10 +30,8 @@ export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingPr
     setIsLoading(true);
     setShowAnalysis(false);
     try {
-      const imageHash = base64Image.includes(CHIPS_IMAGE_HASH) ? CHIPS_IMAGE_HASH : null;
-      
       const { data, error } = await supabase.functions.invoke('analyze-food', {
-        body: { image: base64Image, imageHash }
+        body: { image: base64Image }
       });
 
       if (error) throw new Error(error.message || 'Failed to analyze food');
@@ -52,19 +47,16 @@ export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingPr
 
       saveFoodEntry(newEntry);
       setEntries(getFoodEntries());
+      
+      // Update the daily totals to reflect the new food entry
       updateTotals();
       
       const dailyTotals = getDailyTotals();
       const goalMet = dailyTotals.calories >= goals.calories;
       
       toast({
-        title: data.source === 'csv' 
-          ? "Found in database!" 
-          : data.isUnhealthy 
-            ? "Warning: Unhealthy Food Detected" 
-            : "Food tracked successfully!",
+        title: goalMet ? "Daily Goal Achieved! 🎉" : "Food tracked successfully!",
         description: data.description,
-        variant: data.isUnhealthy ? "destructive" : "default",
       });
     } catch (error) {
       console.error('Error analyzing image:', error);

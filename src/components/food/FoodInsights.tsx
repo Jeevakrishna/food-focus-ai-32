@@ -28,14 +28,12 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
       return "Try starting with a balanced breakfast like oatmeal with fruits and nuts.";
     }
 
+    // Check if the last entry is unhealthy food (chips)
     const lastEntry = entries[entries.length - 1];
-    
-    // If it's the specific chips, return a warning message
-    if (lastEntry.isUnhealthy) {
-      return "Bad food! These chips are high in calories, fat, and sodium. Consider healthier snack alternatives like fresh fruits or nuts.";
+    if (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy) {
+      return "Consider drinking more water today to help your body process the sodium from processed foods.";
     }
 
-    // Regular meal suggestions based on nutritional needs
     const recentEntries = entries.slice(-3);
     const totalProtein = recentEntries.reduce((sum, entry) => sum + entry.protein, 0);
     const totalCarbs = recentEntries.reduce((sum, entry) => sum + entry.carbs, 0);
@@ -56,23 +54,31 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
     return "A light meal of Greek salad with grilled tofu would be a great choice to maintain your balanced intake.";
   };
 
+  // Check if we should show the insights at all
+  const shouldShowInsights = () => {
+    if (entries.length === 0) return true;
+    
+    const lastEntry = entries[entries.length - 1];
+    // If it's chips, we don't want to show meal suggestions
+    if (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy) {
+      return false;
+    }
+    return true;
+  };
+
+  if (!shouldShowInsights()) {
+    return null; // Don't render anything if the last food was chips
+  }
+
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
-            {entries.length > 0 && entries[entries.length - 1].isUnhealthy 
-              ? "Food Warning"
-              : "Meal Suggestion"
-            }
+            Meal Suggestion
           </CardTitle>
-          <CardDescription>
-            {entries.length > 0 && entries[entries.length - 1].isUnhealthy 
-              ? "Health Information"
-              : "Based on your recent nutrition intake"
-            }
-          </CardDescription>
+          <CardDescription>Based on your recent nutrition intake</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{suggestNextMeal()}</p>
