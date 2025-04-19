@@ -1,4 +1,3 @@
-
 import { Brain } from "lucide-react";
 import {
   Card,
@@ -15,7 +14,6 @@ interface FoodEntry {
   carbs: number;
   fat: number;
   timestamp: string;
-  isUnhealthy?: boolean;
 }
 
 interface FoodInsightsProps {
@@ -24,15 +22,8 @@ interface FoodInsightsProps {
 
 export const FoodInsights = ({ entries }: FoodInsightsProps) => {
   const suggestNextMeal = () => {
-    if (!entries || entries.length === 0) {
+    if (entries.length === 0) {
       return "Try starting with a balanced breakfast like oatmeal with fruits and nuts.";
-    }
-
-    // Check if the last entry is unhealthy food (chips)
-    const lastEntry = entries[entries.length - 1];
-    if (lastEntry && lastEntry.description && 
-        (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy)) {
-      return "Consider drinking more water today to help your body process the sodium from processed foods.";
     }
 
     const recentEntries = entries.slice(-3);
@@ -54,23 +45,6 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
 
     return "A light meal of Greek salad with grilled tofu would be a great choice to maintain your balanced intake.";
   };
-
-  // Check if we should show the insights at all
-  const shouldShowInsights = () => {
-    if (!entries || entries.length === 0) return true;
-    
-    const lastEntry = entries[entries.length - 1];
-    // If it's chips, we don't want to show meal suggestions
-    if (lastEntry && lastEntry.description && 
-        (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy)) {
-      return false;
-    }
-    return true;
-  };
-
-  if (!shouldShowInsights()) {
-    return null; // Don't render anything if the last food was chips
-  }
 
   return (
     <div className="grid gap-6">

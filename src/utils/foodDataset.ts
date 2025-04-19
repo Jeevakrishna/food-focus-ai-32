@@ -1,94 +1,28 @@
-
-// This dataset is populated from Foods_data.csv
+// This is a simplified version of the dataset for demonstration
+// In a production environment, this would be loaded from an external source
 export const foodDatabase = {
-  "dosa": {
-    calories: 133,
-    protein: 3.5,
-    carbs: 25.2,
-    fat: 2.1,
-    confidence: 1,
-    region: "South Indian"
-  },
-  "idli": {
-    calories: 85,
-    protein: 2.5,
-    carbs: 18.2,
-    fat: 0.2,
-    confidence: 1,
-    region: "South Indian"
-  },
-  "sambar": {
-    calories: 140,
-    protein: 5,
-    carbs: 23,
-    fat: 4,
-    confidence: 1,
-    region: "South Indian"
-  },
-  "butter chicken": {
-    calories: 485,
-    protein: 28,
-    carbs: 12,
-    fat: 38,
-    confidence: 1,
-    region: "North Indian"
-  },
-  "naan": {
-    calories: 260,
-    protein: 9,
-    carbs: 48,
-    fat: 3.3,
-    confidence: 1,
-    region: "North Indian"
-  },
-  "biryani": {
-    calories: 292,
-    protein: 19,
-    carbs: 25,
-    fat: 14,
-    confidence: 1,
-    region: "North Indian"
-  },
-  "palak paneer": {
-    calories: 260,
+  "pizza": {
+    calories: 266,
     protein: 11,
-    carbs: 10,
-    fat: 20,
-    confidence: 1,
-    region: "North Indian"
+    carbs: 33,
+    fat: 10,
+    confidence: 1
   },
-  "masala dosa": {
-    calories: 387,
-    protein: 8,
-    carbs: 52,
-    fat: 18,
-    confidence: 1,
-    region: "South Indian"
+  "burger": {
+    calories: 354,
+    protein: 20,
+    carbs: 29,
+    fat: 17,
+    confidence: 1
   },
-  "vada": {
-    calories: 97,
-    protein: 4.1,
-    carbs: 18.2,
-    fat: 0.9,
-    confidence: 1,
-    region: "South Indian"
-  },
-  "puri": {
-    calories: 101,
+  "salad": {
+    calories: 100,
     protein: 3,
-    carbs: 14,
-    fat: 4.2,
-    confidence: 1,
-    region: "North Indian"
+    carbs: 11,
+    fat: 7,
+    confidence: 1
   },
-  "chapati": {
-    calories: 120,
-    protein: 4,
-    carbs: 20,
-    fat: 3.5,
-    confidence: 1,
-    region: "North Indian"
-  }
+  // Add more food items as needed
 };
 
 export const findFoodInDataset = (foodName: string): null | {
@@ -97,7 +31,6 @@ export const findFoodInDataset = (foodName: string): null | {
   carbs: number;
   fat: number;
   confidence: number;
-  region?: string;
 } => {
   const normalizedName = foodName.toLowerCase().trim();
   
