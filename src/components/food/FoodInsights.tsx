@@ -24,13 +24,13 @@ interface FoodInsightsProps {
 
 export const FoodInsights = ({ entries }: FoodInsightsProps) => {
   const suggestNextMeal = () => {
-    if (entries.length === 0) {
+    if (!entries || entries.length === 0) {
       return "Try starting with a balanced breakfast like oatmeal with fruits and nuts.";
     }
 
     // Check if the last entry is unhealthy food (chips)
     const lastEntry = entries[entries.length - 1];
-    if (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy) {
+    if (lastEntry && (lastEntry.description?.toLowerCase() === "chips" || lastEntry.isUnhealthy)) {
       return "Consider drinking more water today to help your body process the sodium from processed foods.";
     }
 
@@ -56,11 +56,12 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
 
   // Check if we should show the insights at all
   const shouldShowInsights = () => {
-    if (entries.length === 0) return true;
+    if (!entries || entries.length === 0) return true;
     
     const lastEntry = entries[entries.length - 1];
     // If it's chips, we don't want to show meal suggestions
-    if (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy) {
+    if (lastEntry && lastEntry.description && 
+        (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy)) {
       return false;
     }
     return true;

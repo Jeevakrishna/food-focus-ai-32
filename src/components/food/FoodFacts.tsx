@@ -24,11 +24,15 @@ interface FoodFactsProps {
 
 export const FoodFacts = ({ entries }: FoodFactsProps) => {
   const getFunFact = () => {
-    if (entries.length === 0) {
+    if (!entries || entries.length === 0) {
       return "Upload your first food item to get interesting food facts!";
     }
 
     const lastEntry = entries[entries.length - 1];
+    if (!lastEntry || !lastEntry.description) {
+      return "Something seems off with your last food entry. Try adding another one!";
+    }
+
     const foodName = lastEntry.description.toLowerCase();
 
     // Check if it's the special unhealthy food (chips)
