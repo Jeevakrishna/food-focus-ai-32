@@ -30,7 +30,8 @@ export const FoodInsights = ({ entries }: FoodInsightsProps) => {
 
     // Check if the last entry is unhealthy food (chips)
     const lastEntry = entries[entries.length - 1];
-    if (lastEntry && (lastEntry.description?.toLowerCase() === "chips" || lastEntry.isUnhealthy)) {
+    if (lastEntry && lastEntry.description && 
+        (lastEntry.description.toLowerCase() === "chips" || lastEntry.isUnhealthy)) {
       return "Consider drinking more water today to help your body process the sodium from processed foods.";
     }
 
