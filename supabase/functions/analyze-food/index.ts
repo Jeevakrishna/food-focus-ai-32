@@ -1,30 +1,46 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2';
 import { findInLocalDatabase } from "./database.ts";
 import { calculateMacroPercentages, corsHeaders } from "./utils.ts";
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt, image } = await req.json();
+    const { image } = await req.json();
     
     if (!image) {
       throw new Error('No image provided');
     }
 
-    console.log('Processing image data...');
+    // Initialize Hugging Face inference
+    const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'));
     
-    // Get the food prediction (using our mock function instead of actual AI)
-    const recognitionResult = recognizeFood(image);
-    console.log('Food prediction:', recognitionResult.prediction);
+    // Classify the image using a food recognition model
+    const result = await hf.imageClassification({
+      model: 'nateraw/food',
+      data: image
+    });
+
+    console.log('AI Recognition result:', result);
+
+    if (!result || result.length === 0) {
+      throw new Error('Could not recognize food in image');
+    }
+
+    // Get the top prediction
+    const topPrediction = result[0];
+    const predictedFood = topPrediction.label;
+    const confidence = topPrediction.score;
+
+    console.log('Predicted food:', predictedFood, 'with confidence:', confidence);
     
-    // Try to find in local database
-    const localMatch = findInLocalDatabase(recognitionResult.prediction);
+    // Try to find match in local database
+    const localMatch = findInLocalDatabase(predictedFood);
     
     if (localMatch) {
       console.log('Found match in local database:', localMatch);
@@ -37,17 +53,17 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({
-          description: recognitionResult.prediction,
+          description: predictedFood,
           ...localMatch,
-          confidence: localMatch.confidence,
-          source: 'local',
+          confidence: confidence,
+          source: 'ai',
           macroPercentages
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // If no local match found, use default values
+    // If no local match found, use default values with lower confidence
     console.log('No local match found, using default values');
     const defaultValues = {
       calories: 200,
@@ -66,9 +82,9 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({
-        description: recognitionResult.prediction,
+        description: predictedFood,
         ...defaultValues,
-        confidence: recognitionResult.confidence,
+        confidence: confidence * 0.8, // Reduce confidence for default values
         source: 'ai',
         macroPercentages
       }),

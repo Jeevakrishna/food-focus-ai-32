@@ -2,6 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { MacronutrientChart } from "./MacronutrientChart";
 import { Database } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FoodAnalysisResultProps {
   isVisible: boolean;
@@ -31,9 +32,14 @@ export const FoodAnalysisResult = ({ isVisible, foodData }: FoodAnalysisResultPr
           <div>
             <h2 className="text-xl font-bold">{foodData.description}</h2>
             {foodData.source && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <span className={cn(
+                "text-xs flex items-center gap-1 mt-1",
+                foodData.confidence && foodData.confidence > 0.8 
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-yellow-600 dark:text-yellow-400"
+              )}>
                 <Database className="w-3 h-3" />
-                {foodData.source === 'local' ? 'From Database' : 'AI Estimated'} 
+                {foodData.source === 'local' ? 'From Database' : 'AI Identified'} 
                 {foodData.confidence && `(${Math.round(foodData.confidence * 100)}% confidence)`}
               </span>
             )}

@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -47,16 +46,14 @@ export const FoodTracking = ({ goals, setEntries, updateTotals }: FoodTrackingPr
 
       saveFoodEntry(newEntry);
       setEntries(getFoodEntries());
-      
-      // Update the daily totals to reflect the new food entry
       updateTotals();
       
       const dailyTotals = getDailyTotals();
       const goalMet = dailyTotals.calories >= goals.calories;
       
       toast({
-        title: goalMet ? "Daily Goal Achieved! 🎉" : "Food tracked successfully!",
-        description: data.description,
+        title: `${data.source === 'ai' ? '🤖 AI identified:' : '📝 Added:'} ${data.description}`,
+        description: `Confidence: ${Math.round(data.confidence * 100)}%${goalMet ? ' | Daily Goal Achieved! 🎉' : ''}`,
       });
     } catch (error) {
       console.error('Error analyzing image:', error);
