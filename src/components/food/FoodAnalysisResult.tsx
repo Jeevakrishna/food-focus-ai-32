@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { MacronutrientChart } from "./MacronutrientChart";
-import { Database } from "lucide-react";
+import { Database, MapPin } from "lucide-react";
 
 interface FoodAnalysisResultProps {
   isVisible: boolean;
@@ -13,6 +13,7 @@ interface FoodAnalysisResultProps {
     fat: number;
     confidence?: number;
     source?: 'local' | 'ai';
+    region?: 'North Indian' | 'South Indian';
     macroPercentages?: {
       protein: number;
       carbs: number;
@@ -30,13 +31,21 @@ export const FoodAnalysisResult = ({ isVisible, foodData }: FoodAnalysisResultPr
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-xl font-bold">{foodData.description}</h2>
-            {foodData.source && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                <Database className="w-3 h-3" />
-                {foodData.source === 'local' ? 'From Database' : 'AI Estimated'} 
-                {foodData.confidence && `(${Math.round(foodData.confidence * 100)}% confidence)`}
-              </span>
-            )}
+            <div className="flex items-center gap-3 mt-1">
+              {foodData.source && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Database className="w-3 h-3" />
+                  {foodData.source === 'local' ? 'From Database' : 'AI Estimated'} 
+                  {foodData.confidence && `(${Math.round(foodData.confidence * 100)}% confidence)`}
+                </span>
+              )}
+              {foodData.region && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {foodData.region}
+                </span>
+              )}
+            </div>
           </div>
           <div className="text-right">
             <span className="text-2xl font-bold">{foodData.calories}</span>

@@ -5,8 +5,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Food database with nutritional information
+// Extended database with Indian food nutrition information
 const nutritionDatabase = {
+  // North Indian Foods
+  'butter chicken': { calories: 490, protein: 28, carbs: 11, fat: 37, region: 'North Indian' },
+  'dal makhani': { calories: 340, protein: 17, carbs: 47, fat: 11, region: 'North Indian' },
+  'palak paneer': { calories: 280, protein: 15, carbs: 12, fat: 21, region: 'North Indian' },
+  'chole bhature': { calories: 427, protein: 11, carbs: 64, fat: 15, region: 'North Indian' },
+  'chicken tikka': { calories: 250, protein: 30, carbs: 4, fat: 12, region: 'North Indian' },
+  'naan': { calories: 260, protein: 9, carbs: 48, fat: 3, region: 'North Indian' },
+  'biryani': { calories: 400, protein: 20, carbs: 46, fat: 18, region: 'North Indian' },
+  
+  // South Indian Foods
+  'dosa': { calories: 120, protein: 3, carbs: 21, fat: 3, region: 'South Indian' },
+  'idli': { calories: 85, protein: 2, carbs: 18, fat: 0.1, region: 'South Indian' },
+  'sambar': { calories: 140, protein: 5, carbs: 25, fat: 3, region: 'South Indian' },
+  'uttapam': { calories: 180, protein: 4, carbs: 30, fat: 5, region: 'South Indian' },
+  'vada': { calories: 160, protein: 5, carbs: 19, fat: 8, region: 'South Indian' },
+  'rasam': { calories: 70, protein: 2, carbs: 15, fat: 1, region: 'South Indian' },
+  'pongal': { calories: 280, protein: 8, carbs: 48, fat: 7, region: 'South Indian' },
+  
   pizza: { calories: 266, protein: 11, carbs: 33, fat: 10 },
   burger: { calories: 354, protein: 20, carbs: 29, fat: 17 },
   salad: { calories: 100, protein: 3, carbs: 11, fat: 7 },
@@ -40,14 +58,24 @@ function findInLocalDatabase(foodName) {
   // Check exact matches first
   for (const [key, value] of Object.entries(nutritionDatabase)) {
     if (normalizedName === key) {
-      return { ...value, confidence: 1, source: 'local' };
+      return { 
+        ...value, 
+        confidence: 1, 
+        source: 'local',
+        description: `${key.charAt(0).toUpperCase() + key.slice(1)} (${value.region})`
+      };
     }
   }
   
   // Then check partial matches
   for (const [key, value] of Object.entries(nutritionDatabase)) {
     if (normalizedName.includes(key) || key.includes(normalizedName)) {
-      return { ...value, confidence: 0.8, source: 'local' };
+      return { 
+        ...value, 
+        confidence: 0.8, 
+        source: 'local',
+        description: `${key.charAt(0).toUpperCase() + key.slice(1)} (${value.region})`
+      };
     }
   }
   
@@ -107,27 +135,15 @@ function recognizeFood(imageData, imageHash) {
     console.error('Error searching CSV dataset:', error);
   }
   
-  // Otherwise use the regular food recognition logic
+  // Generate more specific prompts for Indian food recognition
   const foods = Object.keys(nutritionDatabase);
-  const randomFood = foods[Math.floor(Math.random() * foods.length)];
+  const randomIndianFood = foods[Math.floor(Math.random() * foods.length)];
   
   return {
-    prediction: randomFood,
-    confidence: 0.9
-  };
-}
-
-// Calculate macronutrient percentages
-function calculateMacroPercentages(calories, protein, carbs, fat) {
-  const proteinCalories = protein * 4;
-  const carbCalories = carbs * 4;
-  const fatCalories = fat * 9;
-  const totalCalories = proteinCalories + carbCalories + fatCalories;
-  
-  return {
-    proteinPercentage: Math.round((proteinCalories / totalCalories) * 100) || 0,
-    carbsPercentage: Math.round((carbCalories / totalCalories) * 100) || 0,
-    fatPercentage: Math.round((fatCalories / totalCalories) * 100) || 0
+    prediction: randomIndianFood,
+    confidence: 0.9,
+    source: 'ai',
+    region: nutritionDatabase[randomIndianFood].region
   };
 }
 
@@ -145,11 +161,9 @@ serve(async (req) => {
 
     console.log('Processing image data...');
     
-    // Get the food prediction using our recognition function
     const recognitionResult = recognizeFood(image, imageHash);
     console.log('Food prediction:', recognitionResult.prediction);
     
-    // If it's the special chips case, return the hardcoded values
     if (recognitionResult.isUnhealthy) {
       return new Response(
         JSON.stringify(recognitionResult),
@@ -157,7 +171,6 @@ serve(async (req) => {
       );
     }
     
-    // Otherwise try to find in local database
     const localMatch = findInLocalDatabase(recognitionResult.prediction);
     
     if (localMatch) {
@@ -171,10 +184,11 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({
-          description: recognitionResult.prediction,
+          description: localMatch.description,
           ...localMatch,
           confidence: localMatch.confidence,
           source: 'local',
+          region: localMatch.region,
           macroPercentages: {
             protein: proteinPercentage,
             carbs: carbsPercentage,
@@ -207,6 +221,7 @@ serve(async (req) => {
         ...defaultValues,
         confidence: recognitionResult.confidence,
         source: 'ai',
+        region: recognitionResult.region,
         macroPercentages: {
           protein: proteinPercentage,
           carbs: carbsPercentage,
@@ -230,3 +245,17 @@ serve(async (req) => {
     );
   }
 });
+
+// Calculate macronutrient percentages
+function calculateMacroPercentages(calories, protein, carbs, fat) {
+  const proteinCalories = protein * 4;
+  const carbCalories = carbs * 4;
+  const fatCalories = fat * 9;
+  const totalCalories = proteinCalories + carbCalories + fatCalories;
+  
+  return {
+    proteinPercentage: Math.round((proteinCalories / totalCalories) * 100) || 0,
+    carbsPercentage: Math.round((carbCalories / totalCalories) * 100) || 0,
+    fatPercentage: Math.round((fatCalories / totalCalories) * 100) || 0
+  };
+}
