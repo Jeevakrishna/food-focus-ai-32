@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Upload, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -8,6 +9,7 @@ import { CameraCapture } from "@/components/food/CameraCapture";
 import { FoodEntryList } from "@/components/food/FoodEntryList";
 import { FoodInsights } from "@/components/food/FoodInsights";
 import { DailyProgress } from "@/components/food/DailyProgress";
+import { MacronutrientDisplay } from "@/components/food/MacronutrientDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   saveFoodEntry, 
@@ -141,6 +143,8 @@ const Index = () => {
             carbsGoal={goals.carbs}
             fatGoal={goals.fat}
           />
+          
+          <MacronutrientDisplay />
 
           <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Track Your Food</h2>
