@@ -1,3 +1,4 @@
+
 import { Brain } from "lucide-react";
 import {
   Card,
@@ -27,6 +28,11 @@ export const FoodFacts = ({ entries }: FoodFactsProps) => {
     }
 
     const lastEntry = entries[entries.length - 1];
+    // Check if lastEntry has a description before using toLowerCase
+    if (!lastEntry || !lastEntry.description) {
+      return "Every food you eat has a unique story and nutritional profile that contributes to your health!";
+    }
+    
     const foodName = lastEntry.description.toLowerCase();
 
     // Add more food facts as needed
