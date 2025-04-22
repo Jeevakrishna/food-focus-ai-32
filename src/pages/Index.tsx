@@ -3,13 +3,12 @@ import { Upload, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CameraCapture } from "@/components/food/CameraCapture";
 import { FoodEntryList } from "@/components/food/FoodEntryList";
 import { FoodInsights } from "@/components/food/FoodInsights";
-import { FoodFacts } from "@/components/food/FoodFacts";
 import { DailyProgress } from "@/components/food/DailyProgress";
 import { supabase } from "@/integrations/supabase/client";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { 
   saveFoodEntry, 
   getFoodEntries, 
@@ -114,20 +113,9 @@ const Index = () => {
   };
 
   const totals = getDailyTotals();
-  
-  // Calculate macro percentages
-  const totalMacros = totals.protein * 4 + totals.carbs * 4 + totals.fat * 9; // Convert to calories
-  const macroData = [
-    { name: 'Protein', value: totals.protein * 4, color: '#8B5CF6' }, // Vivid Purple
-    { name: 'Carbs', value: totals.carbs * 4, color: '#F97316' },    // Bright Orange
-    { name: 'Fat', value: totals.fat * 9, color: '#0EA5E9' }         // Ocean Blue
-  ].map(item => ({
-    ...item,
-    percentage: totalMacros > 0 ? Math.round((item.value / totalMacros) * 100) : 0
-  }));
 
   return (
-    <div className="min-h-screen pb-20 bg-white">
+    <div className="min-h-screen pb-20 bg-gradient-to-b from-background to-background/80">
       <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fadeIn">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -139,6 +127,7 @@ const Index = () => {
               <span>Time until next day: {timeLeft}</span>
             </div>
           </div>
+          <ThemeToggle />
         </div>
 
         <div className="grid gap-6">
@@ -153,7 +142,7 @@ const Index = () => {
             fatGoal={goals.fat}
           />
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border">
+          <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Track Your Food</h2>
             <div className="flex gap-4 justify-center">
               <Button
@@ -175,35 +164,7 @@ const Index = () => {
             />
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border">
-            <h2 className="text-xl font-semibold mb-4">Macro Distribution</h2>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={macroData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, percentage }) => `${name}: ${percentage}%`}
-                  >
-                    {macroData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
           <FoodEntryList entries={getTodayEntries()} title="Today's Entries" />
-          <div className="mt-4">
-            <FoodFacts entries={entries} />
-          </div>
           <div className="mt-4">
             <FoodInsights entries={entries} />
           </div>

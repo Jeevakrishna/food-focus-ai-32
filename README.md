@@ -4,10 +4,10 @@ Follow these steps:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone https://github.com/Jeevakrishna/food-focus-ai-32.git
+git clone https://github.com/Jeevakrishna/food-focus-ai.git
 
 # Step 2: Navigate to the project directory.
-cd food-focus-ai-32
+cd food-focus-ai
 
 # Step 3: Install the necessary dependencies.
 npm install

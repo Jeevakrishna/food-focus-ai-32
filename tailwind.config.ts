@@ -1,13 +1,13 @@
 import type { Config } from "tailwindcss";
 
 export default {
+  darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
-  darkMode: ["class"],
   prefix: "",
   theme: {
     container: {
@@ -24,6 +24,14 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        success: {
+          DEFAULT: "#34D399",
+          light: "#A7F3D0",
+        },
+        warning: {
+          DEFAULT: "#F59E0B",
+          light: "#FDE68A",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -52,19 +60,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        success: {
-          DEFAULT: "#34D399",
-          light: "#A7F3D0",
-        },
-        warning: {
-          DEFAULT: "#F59E0B",
-          light: "#FDE68A",
-        },
         macro: {
           protein: "#FF6B6B",
           carbs: "#4ECDC4",
           fat: "#FFD93D",
         },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
         "accordion-down": {
